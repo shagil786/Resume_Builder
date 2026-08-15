@@ -1,0 +1,17 @@
+export type FactStatus = 'EXTRACTED' | 'USER_PROVIDED' | 'VERIFIED' | 'REJECTED' | 'NEEDS_REVIEW';
+export type FactCategory = 'WORK' | 'SKILL' | 'PROJECT' | 'EDUCATION' | 'CERTIFICATION' | 'ACHIEVEMENT';
+export type ExtractionMethod = 'PDF_PARSER' | 'DOCX_PARSER' | 'OCR' | 'USER_INPUT';
+export type CandidateProfileStatus = 'DRAFT' | 'FINALIZED';
+export type Visibility = 'PRIVATE' | 'PUBLIC_LINK';
+export type PIIVisibility = 'USER_ONLY' | 'HIRING_MANAGER' | 'PUBLIC';
+export type DocumentStatus = 'PENDING_PROCESSING' | 'PROCESSED' | 'FAILED';
+export type JobSource = 'TEXT_INPUT' | 'JOB_URL' | 'API_IMPORT';
+export type JobStatus = 'ANALYZED' | 'FAILED_ANALYSIS';
+export type RequirementType = 'HARD' | 'SOFT' | 'NICE_TO_HAVE';
+export type RequirementCategory = 'TECHNICAL' | 'EXPERIENCE' | 'SKILL' | 'EDUCATION' | 'SOFT';
+export type ResumeVersionStatus = 'DRAFT' | 'GENERATED' | 'FINALIZED' | 'ARCHIVED';
+export type SectionType = 'SUMMARY' | 'EXPERIENCE' | 'PROJECT' | 'SKILL' | 'EDUCATION' | 'CERTIFICATION' | 'CUSTOM';
+export type GenerationStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+export type StageStatus = 'STARTED' | 'COMPLETED' | 'FAILED' | 'SKIPPED';
+export type TemplateCategory = 'PROFESSIONAL' | 'CREATIVE' | 'MINIMAL' | 'ACADEMIC';
+export type SkillProficiency = 'ENTRY' | 'JUNIOR' | 'INTERMEDIATE' | 'SENIOR' | 'EXPERT';
