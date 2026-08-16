@@ -23,6 +23,14 @@
     "lint": "turbo run lint",
     "turbo": "turbo"
   },
+  "overrides": {
+    "postcss": "8.5.26",
+    "sharp": "0.35.3",
+    "next": {
+      "postcss": "8.5.26",
+      "sharp": "0.35.3"
+    }
+  },
   "devDependencies": {
     "@types/node": "^26.2.0",
     "turbo": "^1.13.3",
