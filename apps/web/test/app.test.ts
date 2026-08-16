@@ -33,4 +33,13 @@ test.describe('Web App', () => {
     await expect(page.locator('h1')).toContainText('Version History');
     await expect(page.locator('text=No versions yet')).toBeVisible();
   });
+
+  test('mobile navigation opens the workspace menu', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/');
+    await expect(page.getByRole('button', { name: 'Open navigation' })).toBeVisible();
+    await page.getByRole('button', { name: 'Open navigation' }).click();
+    await expect(page.getByRole('navigation', { name: 'Mobile navigation' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'My profile' })).toBeVisible();
+  });
 });
