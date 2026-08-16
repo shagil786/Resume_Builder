@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '/api/v1';
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? '/api/v1').replace(/\/$/, '');
 
 export interface ApiResponse<T> {
   data?: T;
@@ -51,6 +51,7 @@ export const api = {
   auth: {
     register: (body: { email: string; password: string; name: string }) => request<{ token: string }>('/auth/register', { method: 'POST', body: JSON.stringify(body) }),
     login: (body: { email: string; password: string }) => request<{ token: string }>('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
+    me: () => request<{ email: string; name: string }>('/auth/me'),
   },
   candidates: {
     create: (body: { personalInfo: Record<string, unknown> }) =>

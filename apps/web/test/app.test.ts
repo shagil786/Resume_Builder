@@ -6,10 +6,11 @@ test.describe('Web App', () => {
     await expect(page.locator('h1')).toContainText('Build a resume that earns the interview.');
   });
 
-  test('dashboard link navigates to dashboard', async ({ page }) => {
+  test('dashboard requires authentication', async ({ page }) => {
     await page.goto('/');
     await page.click('a[href="/dashboard"]');
-    await expect(page.locator('h1')).toContainText('Dashboard');
+    await expect(page).toHaveURL(/\/login\?next=%2Fdashboard/);
+    await expect(page.locator('h2')).toContainText('Sign in to continue');
   });
 
   test('templates page shows templates', async ({ page }) => {
@@ -28,10 +29,10 @@ test.describe('Web App', () => {
     expect(count).toBe(3);
   });
 
-  test('history page shows placeholder', async ({ page }) => {
+  test('history requires authentication', async ({ page }) => {
     await page.goto('/history');
-    await expect(page.locator('h1')).toContainText('Version History');
-    await expect(page.locator('text=No versions yet')).toBeVisible();
+    await expect(page).toHaveURL(/\/login\?next=%2Fhistory/);
+    await expect(page.locator('h2')).toContainText('Sign in to continue');
   });
 
   test('mobile navigation opens the workspace menu', async ({ page }) => {
@@ -44,6 +45,7 @@ test.describe('Web App', () => {
   });
 
   test('profile workspace presents editable contact fields', async ({ page }) => {
+    await page.addInitScript(() => window.localStorage.setItem('resume_builder_token', 'test-token'));
     await page.goto('/profile');
     await expect(page.locator('h1')).toContainText('Candidate profile');
     await expect(page.getByLabel('First name')).toBeVisible();

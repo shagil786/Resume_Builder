@@ -38,4 +38,11 @@ describe('Auth Flow', () => {
     const res = await app.inject({ method: 'GET', url: '/api/v1/auth/me' });
     expect(res.statusCode).toBe(401);
   });
+
+  test('validates malformed authentication requests', async () => {
+    const login = await app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: {} });
+    expect(login.statusCode).toBe(400);
+    const register = await app.inject({ method: 'POST', url: '/api/v1/auth/register', payload: { email: 'new@example.com' } });
+    expect(register.statusCode).toBe(400);
+  });
 });

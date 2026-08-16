@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { api } from '../../lib/api';
+import { AuthGuard } from '../components/auth-guard';
 
 export default function JobPage() {
   const [url, setUrl] = useState('');
@@ -23,7 +24,7 @@ export default function JobPage() {
   };
 
   return (
-    <div>
+    <AuthGuard><div>
       <h1 className="text-2xl font-bold text-slate-900">Job Description</h1>
       <p className="mt-1 text-sm text-slate-500">Analyze a job posting and generate a tailored resume</p>
 
@@ -66,6 +67,6 @@ export default function JobPage() {
 
         {result && <p className="text-sm text-slate-600">{result}</p>}
       </form>
-    </div>
+    </div></AuthGuard>
   );
 }

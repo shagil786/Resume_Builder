@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { api } from '../../lib/api';
+import { AuthGuard } from '../components/auth-guard';
 
 export default function PreviewPage() {
   const [html, setHtml] = useState<string | null>(null);
@@ -18,7 +19,7 @@ export default function PreviewPage() {
   };
 
   return (
-    <div>
+    <AuthGuard><div>
       <h1 className="text-2xl font-bold text-slate-900">Preview</h1>
       <p className="mt-1 text-sm text-slate-500">Preview your resume as rendered HTML</p>
 
@@ -36,6 +37,6 @@ export default function PreviewPage() {
           <iframe srcDoc={html} className="h-[800px] w-full" title="Resume Preview" />
         </div>
       )}
-    </div>
+    </div></AuthGuard>
   );
 }

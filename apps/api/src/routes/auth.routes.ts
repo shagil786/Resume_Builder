@@ -35,18 +35,18 @@ export async function authRoutes(app: FastifyInstance, db?: DB) {
     '/auth/register',
     async (request, reply) => {
       const { email, password, name } = request.body;
-      if (!email || !password || !name) {
+      if (typeof email !== 'string' || typeof password !== 'string' || typeof name !== 'string' || !email.trim() || !password || !name.trim()) {
         reply.status(400).send({ error: 'Email, password, and name are required' });
         return;
       }
-      if (await findByEmail(email)) {
+      if (await findByEmail(email.trim())) {
         reply.status(409).send({ error: 'User already exists' });
         return;
       }
       const passwordHash = hashPassword(password);
       const user = repository
-        ? await repository.create({ email, name, passwordHash })
-        : (() => { const value = { id: email, email, name, passwordHash }; users.set(email, value); return value; })();
+        ? await repository.create({ email: email.trim(), name: name.trim(), passwordHash })
+        : (() => { const value = { id: email.trim(), email: email.trim(), name: name.trim(), passwordHash }; users.set(email.trim(), value); return value; })();
       const token = await reply.jwtSign({ id: user.id, email: user.email, name: user.name });
       reply.status(201).send({ token, user: { email, name } });
     }
@@ -56,7 +56,11 @@ export async function authRoutes(app: FastifyInstance, db?: DB) {
     '/auth/login',
     async (request, reply) => {
       const { email, password } = request.body;
-      const user = await findByEmail(email);
+      if (typeof email !== 'string' || typeof password !== 'string' || !email.trim() || !password) {
+        reply.status(400).send({ error: 'Email and password are required' });
+        return;
+      }
+      const user = await findByEmail(email.trim());
       if (!user || !verifyPassword(password, user.passwordHash)) {
         reply.status(401).send({ error: 'Invalid email or password' });
         return;

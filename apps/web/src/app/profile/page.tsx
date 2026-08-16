@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { api, type CandidateProfileResponse } from '../../lib/api';
+import { AuthGuard } from '../components/auth-guard';
 
 type ProfileForm = {
   firstName: string;
@@ -59,7 +60,7 @@ export default function ProfilePage() {
     setSaving(false);
   };
 
-  return (
+  return <AuthGuard><div>
     <div className="space-y-8">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">Your foundation</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Candidate profile</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Start with the details you want employers to see. You can add experience, skills, and verified facts after your profile is saved.</p></div>{profileId && <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">Draft profile</span>}</div>
 
@@ -72,5 +73,5 @@ export default function ProfilePage() {
         <aside className="h-fit rounded-2xl border border-slate-200 bg-slate-950 p-6 text-white"><p className="text-sm font-semibold text-teal-300">Next steps</p><h2 className="mt-3 text-xl font-semibold">Build your evidence base.</h2><p className="mt-3 text-sm leading-6 text-slate-300">Once your profile is saved, upload a resume so we can extract experience and skills for your review.</p><button type="submit" disabled={saving} className="mt-6 w-full rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-400 disabled:opacity-50">{saving ? 'Saving…' : profileId ? 'Save profile' : 'Create profile'}</button>{profileId && <p className="mt-4 break-all text-xs text-slate-400">Profile ID: {profileId}</p>}{status && <p role="status" className="mt-4 rounded-xl bg-emerald-400/10 p-3 text-sm text-emerald-200">{status}</p>}{error && <p role="alert" className="mt-4 rounded-xl bg-red-400/10 p-3 text-sm text-red-200">{error}</p>}</aside>
       </form>}
     </div>
-  );
+  </div></AuthGuard>;
 }

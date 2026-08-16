@@ -1,6 +1,7 @@
 'use client';
 import { useState, useRef } from 'react';
 import { api } from '../../lib/api';
+import { AuthGuard } from '../components/auth-guard';
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -21,7 +22,7 @@ export default function UploadPage() {
   };
 
   return (
-    <div>
+    <AuthGuard><div>
       <h1 className="text-2xl font-bold text-slate-900">Upload Resume</h1>
       <p className="mt-1 text-sm text-slate-500">Upload a PDF or DOCX to extract career facts</p>
 
@@ -45,6 +46,6 @@ export default function UploadPage() {
 
         {result && <p className="mt-3 text-sm text-slate-600">{result}</p>}
       </div>
-    </div>
+    </div></AuthGuard>
   );
 }

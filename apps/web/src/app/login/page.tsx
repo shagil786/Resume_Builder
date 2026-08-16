@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '../../lib/api';
 
 export default function LoginPage() {
@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -21,7 +22,7 @@ export default function LoginPage() {
       ? await api.auth.register({ email, password, name })
       : await api.auth.login({ email, password });
     if (result.error || !result.data) setMessage(result.error ?? 'Authentication failed');
-    else { window.localStorage.setItem('resume_builder_token', result.data.token); router.push('/dashboard'); }
+    else { window.localStorage.setItem('resume_builder_token', result.data.token); router.push(searchParams.get('next') || '/dashboard'); }
     setLoading(false);
   }
 

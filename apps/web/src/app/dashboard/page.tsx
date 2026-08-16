@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getDashboardStats, type DashboardStats } from '@/lib/dashboard';
+import { AuthGuard } from '../components/auth-guard';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -9,7 +10,7 @@ export default function DashboardPage() {
   useEffect(() => { getDashboardStats().then(setStats); }, []);
 
   return (
-    <div>
+    <AuthGuard><div>
       <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
       <p className="mt-1 text-sm text-slate-500">Overview of your candidate profile</p>
 
@@ -31,7 +32,7 @@ export default function DashboardPage() {
           <Link href="/profile" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Edit Profile</Link>
         </div>
       </div>
-    </div>
+    </div></AuthGuard>
   );
 }
 
