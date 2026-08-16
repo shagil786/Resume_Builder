@@ -16,7 +16,7 @@ export interface AuthPluginOptions {
 }
 
 export default fp<AuthPluginOptions>(async (fastify: FastifyInstance, opts: AuthPluginOptions) => {
-  await fastify.register(jwt, { secret: opts.secret });
+  await fastify.register(jwt, { secret: opts.secret, sign: { expiresIn: '1h' } });
 
   fastify.decorate('authenticate', async function (request: FastifyRequest, reply: FastifyReply) {
     try {

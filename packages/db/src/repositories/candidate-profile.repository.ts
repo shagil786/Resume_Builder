@@ -58,8 +58,11 @@ export function createCandidateProfileRepository(db: DB | TX): ICandidateProfile
     },
 
     async update(id, data) {
+      const updateData: Partial<typeof candidateProfiles.$inferInsert> = {};
+      if (data.personalInfo !== undefined) updateData.personalInfo = data.personalInfo;
+      if (data.summary !== undefined) updateData.summary = data.summary ?? null;
       const row = await db.update(candidateProfiles)
-        .set({ ...data, updatedAt: new Date() })
+        .set({ ...updateData, updatedAt: new Date() })
         .where(eq(candidateProfiles.id, id))
         .returning();
       return row[0] ? dbRowToProfile(row[0]) : null;

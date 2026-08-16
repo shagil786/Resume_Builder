@@ -130,7 +130,7 @@ export class DocumentService {
         this.logger.error('Document processing failed', { error: err });
         if (uow) {
           await uow.sourceDocuments.updateStatus(document.id, 'FAILED');
-          await uow.sourceDocuments.update(document.id, { processingError: err instanceof Error ? err.message : String(err) });
+          await uow.sourceDocuments.update(document.id, { processingError: 'Document processing failed' });
         }
       }
     }

@@ -93,6 +93,9 @@ export async function loadApplicationConfig(
   }
 
   const secrets = await loadKeyVaultSecrets(keyVaultUrl, options.client);
+  if (env.NODE_ENV === 'production' && !env.DATABASE_HOST?.trim()) {
+    throw new Error('DATABASE_HOST is required in production');
+  }
   const database = env.DATABASE_HOST ? {
     host: env.DATABASE_HOST,
     port: parseInteger(env.DATABASE_PORT, 'DATABASE_PORT'),

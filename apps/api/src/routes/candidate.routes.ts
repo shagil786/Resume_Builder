@@ -23,8 +23,28 @@ export async function candidateRoutes(app: FastifyInstance, service: ICandidateP
 
   app.patch<{ Params: { profileId: string }; Body: Record<string, unknown> }>(
     '/:profileId',
-    async (request, _reply) => {
-      await service.updateProfile(request.params.profileId, request.body as never);
+    async (request, reply) => {
+      const body = request.body ?? {};
+      const data: Record<string, unknown> = {};
+      if (Object.hasOwn(body, 'personalInfo')) {
+        if (!body.personalInfo || typeof body.personalInfo !== 'object' || Array.isArray(body.personalInfo)) {
+          reply.status(400).send({ error: 'personalInfo must be an object' });
+          return;
+        }
+        data.personalInfo = body.personalInfo;
+      }
+      if (Object.hasOwn(body, 'summary')) {
+        if (typeof body.summary !== 'string') {
+          reply.status(400).send({ error: 'summary must be a string' });
+          return;
+        }
+        data.summary = body.summary;
+      }
+      if (Object.keys(data).length === 0) {
+        reply.status(400).send({ error: 'No editable profile fields supplied' });
+        return;
+      }
+      await service.updateProfile(request.params.profileId, data);
       return { profileId: request.params.profileId, status: 'UPDATED' };
     }
   );
@@ -90,7 +110,9 @@ export async function candidateRoutes(app: FastifyInstance, service: ICandidateP
 
   app.patch<{ Params: { profileId: string; factId: string }; Body: { status: string; verificationNotes?: string } }>(
     '/:profileId/facts/:factId/status',
-    async (request, _reply) => {
+    async (request, reply) => {
+      const fact = await service.getFactForProfile(request.params.profileId, request.params.factId);
+      if (!fact) { reply.status(404).send({ error: 'Fact not found' }); return; }
       await service.updateFactStatus(request.params.factId, request.body.status, request.body.verificationNotes);
       return { status: 'UPDATED' };
     }
@@ -99,6 +121,8 @@ export async function candidateRoutes(app: FastifyInstance, service: ICandidateP
   app.get<{ Params: { profileId: string; factId: string } }>(
     '/:profileId/facts/:factId/provenance',
     async (request, reply) => {
+      const fact = await service.getFactForProfile(request.params.profileId, request.params.factId);
+      if (!fact) { reply.status(404).send({ error: 'Provenance not found' }); return; }
       const provenance = await service.getFactProvenance(request.params.factId);
       if (!provenance) { reply.status(404).send({ error: 'Provenance not found' }); return; }
       return provenance;

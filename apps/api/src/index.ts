@@ -74,8 +74,12 @@ async function buildApp() {
   const config = await bootstrapStage('config', () => loadApplicationConfig());
   const app = Fastify({ logger: true });
 
-  await app.register(cors, { origin: true });
-  await app.register(multipart);
+  const corsOrigins = (process.env.CORS_ORIGINS ?? '')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
+  await app.register(cors, { origin: corsOrigins.length > 0 ? corsOrigins : false });
+  await app.register(multipart, { limits: { files: 1, fileSize: 10 * 1024 * 1024 } });
   await app.register(authPlugin, { secret: config.jwtSecret });
 
   app.setErrorHandler(errorHandler);

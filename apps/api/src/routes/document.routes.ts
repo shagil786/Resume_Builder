@@ -24,9 +24,18 @@ export async function documentRoutes(
       if (!file) { reply.status(400).send({ error: 'No file uploaded' }); return; }
 
       const buffer = await file.toBuffer();
+      const filename = file.filename.split(/[\\/]/).pop()?.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 180) || 'resume';
+      const extension = filename.toLowerCase().endsWith('.pdf') ? 'pdf' : filename.toLowerCase().endsWith('.docx') ? 'docx' : null;
+      const bytes = new Uint8Array(buffer);
+      const isPdf = bytes.length >= 5 && String.fromCharCode(...bytes.slice(0, 5)) === '%PDF-';
+      const isDocx = bytes.length >= 4 && bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 0x03 && bytes[3] === 0x04;
+      if (!extension || (extension === 'pdf' && !isPdf) || (extension === 'docx' && !isDocx)) {
+        reply.status(415).send({ error: 'Only valid PDF or DOCX resumes are supported' });
+        return;
+      }
       const result = await documentService.uploadDocument(
         request.params.profileId,
-        file.filename,
+        filename,
         file.mimetype,
         buffer.buffer as ArrayBuffer
       );

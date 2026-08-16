@@ -34,7 +34,7 @@ export default function PreviewPage() {
 
       {html && (
         <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <iframe srcDoc={html} className="h-[800px] w-full" title="Resume Preview" />
+          <iframe sandbox="" srcDoc={html} className="h-[800px] w-full" title="Resume Preview" />
         </div>
       )}
     </div></AuthGuard>

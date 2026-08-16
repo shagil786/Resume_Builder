@@ -84,6 +84,11 @@ export class DbCandidateProfileService implements ICandidateProfileService {
     return { facts: result.data, total: result.total };
   }
 
+  async getFactForProfile(profileId: string, factId: string): Promise<CandidateFact | null> {
+    const result = await createUnitOfWork(this.db).candidateFacts.findByProfileId(profileId);
+    return result.data.find(fact => fact.id === factId) ?? null;
+  }
+
   async updateFactStatus(factId: string, status: string, notes?: string): Promise<void> {
     await createUnitOfWork(this.db).candidateFacts.updateStatus(factId, status, notes);
   }

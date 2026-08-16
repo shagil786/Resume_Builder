@@ -44,6 +44,33 @@ describe('Candidate API', () => {
     expect(rendered.body).toContain('TypeScript');
   });
 
+  test('only updates allowlisted profile fields', async () => {
+    const update = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/candidates/${profileId}`,
+      headers: authHeaders(),
+      payload: { summary: 'Updated summary', userId: 'attacker', status: 'PUBLISHED' },
+    });
+    expect(update.statusCode).toBe(200);
+    const profile = await app.inject({ method: 'GET', url: `/api/v1/candidates/${profileId}`, headers: authHeaders() });
+    expect(profile.json().summary).toBe('Updated summary');
+    expect(profile.json().userId).not.toBe('attacker');
+    expect(profile.json().status).toBe('DRAFT');
+  });
+
+  test('does not allow a user to update another profile fact', async () => {
+    const facts = await app.inject({ method: 'POST', url: `/api/v1/candidates/${profileId}/facts/search`, headers: authHeaders(), payload: { query: '' } });
+    const factId = facts.json().facts[0].id as string;
+    const otherAuth = await app.inject({ method: 'POST', url: '/api/v1/auth/register', payload: { email: 'fact-owner-test@example.com', password: 'pass12345', name: 'Other' } });
+    const forbidden = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/candidates/${profileId}/facts/${factId}/status`,
+      headers: { authorization: `Bearer ${otherAuth.json().token}` },
+      payload: { status: 'VERIFIED' },
+    });
+    expect(forbidden.statusCode).toBe(404);
+  });
+
   test('template catalog is public while profile routes require authentication', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/v1/candidates/templates' });
     expect(res.statusCode).toBe(200);

@@ -15,6 +15,9 @@ describe('Auth Flow', () => {
     const body = res.json();
     expect(body.token).toBeDefined();
     expect(body.user.email).toBe('auth-test@example.com');
+    const payload = JSON.parse(Buffer.from(body.token.split('.')[1], 'base64url').toString()) as { exp?: number };
+    expect(payload.exp).toBeTypeOf('number');
+    expect(payload.exp!).toBeGreaterThan(Math.floor(Date.now() / 1000));
     token = body.token;
   });
 

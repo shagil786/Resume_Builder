@@ -5,6 +5,7 @@ import type { CertificationInput, EducationInput, ICandidateProfileService, Proj
 export class CandidateProfileService implements ICandidateProfileService {
   private profiles = new Map<string, CandidateProfile>();
   private facts = new Map<string, CandidateFact>();
+  private factProfiles = new Map<string, string>();
   private counter = 0;
 
   async createProfile(userId: string, personalInfo: PersonalInfo): Promise<{ profileId: string }> {
@@ -53,6 +54,7 @@ export class CandidateProfileService implements ICandidateProfileService {
       context: '', confidence: 1.0, status: 'USER_PROVIDED', category: 'WORK',
       timestamp: new Date(), version: 1,
     });
+    this.factProfiles.set(factId, profileId);
     const experienceId = `exp-${this.counter}`;
     profile.workExperience.push({
       id: experienceId,
@@ -109,9 +111,15 @@ export class CandidateProfileService implements ICandidateProfileService {
     return { certificationId };
   }
 
-  async searchFacts(_profileId: string, _query: string): Promise<{ facts: CandidateFact[]; total: number }> {
-    const allFacts = Array.from(this.facts.values());
+  async searchFacts(profileId: string, _query: string): Promise<{ facts: CandidateFact[]; total: number }> {
+    const allFacts = Array.from(this.facts.entries())
+      .filter(([factId]) => this.factProfiles.get(factId) === profileId)
+      .map(([, fact]) => fact);
     return { facts: allFacts, total: allFacts.length };
+  }
+
+  async getFactForProfile(profileId: string, factId: string): Promise<CandidateFact | null> {
+    return this.factProfiles.get(factId) === profileId ? this.facts.get(factId) ?? null : null;
   }
 
   async updateFactStatus(factId: string, status: string, notes?: string): Promise<void> {

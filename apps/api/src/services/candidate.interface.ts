@@ -34,6 +34,7 @@ export interface ICandidateProfileService {
   addEducation(profileId: string, data: EducationInput): Promise<{ educationId: string }>;
   addCertification(profileId: string, data: CertificationInput): Promise<{ certificationId: string }>;
   searchFacts(profileId: string, query: string): Promise<{ facts: CandidateFact[]; total: number }>;
+  getFactForProfile(profileId: string, factId: string): Promise<CandidateFact | null>;
   updateFactStatus(factId: string, status: string, notes?: string): Promise<void>;
   getFactProvenance(factId: string): Promise<FactProvenance | null>;
 }
