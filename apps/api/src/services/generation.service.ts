@@ -38,9 +38,18 @@ export class GenerationService {
     this.results.set(result.run.id, result);
     if (this.db) {
       const uow = createUnitOfWork(this.db);
-      await uow.generationRuns.create(result.run);
+      try {
+        await uow.generationRuns.create(result.run);
+      } catch (error) {
+        throw new Error(`Resume generation persistence failed at generation run${persistenceErrorCode(error) ? ` (${persistenceErrorCode(error)})` : ''}`);
+      }
       if (result.run.status === 'COMPLETED') {
-        const previous = await uow.resumeVersions.findByProfileId(profile.id);
+        let previous: ResumeVersion[];
+        try {
+          previous = await uow.resumeVersions.findByProfileId(profile.id);
+        } catch (error) {
+          throw new Error(`Resume generation persistence failed at version lookup${persistenceErrorCode(error) ? ` (${persistenceErrorCode(error)})` : ''}`);
+        }
         const version: ResumeVersion = {
           id: crypto.randomUUID(),
           profileId: profile.id,
@@ -52,7 +61,11 @@ export class GenerationService {
           createdAt: new Date(),
           updatedAt: new Date(),
         };
-        await uow.resumeVersions.create(version);
+        try {
+          await uow.resumeVersions.create(version);
+        } catch (error) {
+          throw new Error(`Resume generation persistence failed at version save${persistenceErrorCode(error) ? ` (${persistenceErrorCode(error)})` : ''}`);
+        }
       }
     }
     return result;
@@ -82,4 +95,9 @@ export class GenerationService {
     if (this.db) return createUnitOfWork(this.db).generationRuns.findByProfileId(profileId);
     return memoryRuns.sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
   }
+}
+
+function persistenceErrorCode(error: unknown): string | undefined {
+  if (typeof error !== 'object' || error === null || !('code' in error)) return undefined;
+  return typeof error.code === 'string' ? error.code : undefined;
 }

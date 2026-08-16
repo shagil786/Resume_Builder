@@ -75,10 +75,15 @@ export async function generationRoutes(app: FastifyInstance, profileService: ICa
       } catch (error) {
         const message = error instanceof Error ? error.message : '';
         const status = message.match(/Azure OpenAI API error: (\d{3})/)?.[1];
+        const persistenceFailure = message.match(/Resume generation persistence failed at (.+?)(?: \([^)]+\))?$/)?.[1];
         reply.status(502).send({
           error: {
             code: 'RESUME_GENERATION_FAILED',
-            message: status ? `Azure OpenAI request failed (HTTP ${status})` : 'Azure OpenAI generation failed',
+            message: status
+              ? `Azure OpenAI request failed (HTTP ${status})`
+              : persistenceFailure
+                ? `Resume generation could not be saved (${persistenceFailure})`
+                : 'Azure OpenAI generation failed',
             statusCode: 502,
             timestamp: new Date().toISOString(),
           },
