@@ -75,7 +75,7 @@ export const api = {
       request<{ facts: unknown[]; total: number }>(`/candidates/${id}/facts/search`, { method: 'POST', body: JSON.stringify({ query }) }),
     updateFactStatus: (profileId: string, factId: string, status: string, verificationNotes?: string) =>
       request<{ status: string }>(`/candidates/${profileId}/facts/${factId}/status`, { method: 'PATCH', body: JSON.stringify({ status, verificationNotes }) }),
-    generate: (id: string, body: { jobDescription: string; company: string; title: string; templateId?: string }) =>
+    generate: (id: string, body: { jobDescription?: string; jobUrl?: string; company: string; title: string; templateId?: string }) =>
       request<Record<string, unknown>>(`/candidates/${id}/generate`, { method: 'POST', body: JSON.stringify(body) }),
     generations: (id: string) => request<{ runs: { id: string; status: string; startedAt: string; completedAt?: string; templateId: string }[] }>(`/candidates/${id}/generations`),
     generation: (id: string, runId: string) => request<{ run: { id: string; status: string }; resume: { sections: unknown[]; metadata: Record<string, unknown> }; factCheck: { valid: boolean; issues: unknown[] } }>(`/candidates/${id}/generations/${runId}`),

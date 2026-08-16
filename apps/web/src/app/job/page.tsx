@@ -16,8 +16,8 @@ export default function JobPage() {
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     setNotice(null);
-    if (text.trim().length < 40) {
-      setNotice({ type: 'error', text: 'Paste the full job description so we can make a useful match (at least 40 characters).' });
+    if (text.trim().length < 40 && !url.trim()) {
+      setNotice({ type: 'error', text: 'Paste the full job description or add a public job posting URL.' });
       return;
     }
     setGenerating(true);
@@ -28,7 +28,7 @@ export default function JobPage() {
       return;
     }
     try {
-      const response = await api.candidates.generate(profileId, { jobDescription: text.trim(), company: company.trim(), title: title.trim() });
+      const response = await api.candidates.generate(profileId, { jobDescription: text.trim() || undefined, jobUrl: url.trim() || undefined, company: company.trim(), title: title.trim() });
       if (response.error) setNotice({ type: 'error', text: response.error });
       else {
         const runId = (response.data as { run?: { id?: string } } | undefined)?.run?.id;
@@ -60,7 +60,7 @@ export default function JobPage() {
           <input value={url} onChange={e => setUrl(e.target.value)}
             placeholder="https://company.com/jobs/..."
             className="field-control" />
-          <p className="field-help">We don’t fetch URLs yet. Paste the job description below so it can be analyzed.</p>
+          <p className="field-help">Use a public job page URL or paste the description below. We never send private credentials.</p>
         </div>
 
         <div className="relative">
@@ -76,7 +76,7 @@ export default function JobPage() {
           <label htmlFor="job-description" className="field-label">Job description <span className="text-[#b42318]">*</span></label>
           <textarea id="job-description" value={text} onChange={e => setText(e.target.value)} rows={8}
             placeholder="Paste the full job description here..."
-            required minLength={40} className="field-control min-h-44 resize-y" />
+            className="field-control min-h-44 resize-y" />
           <div className="mt-2 flex justify-between gap-3 text-xs text-[#8b9995]"><span>Include responsibilities and requirements for a stronger match.</span><span>{text.length} characters</span></div>
         </div>
 

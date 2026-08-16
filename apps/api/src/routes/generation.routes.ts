@@ -5,6 +5,7 @@ import type { CandidateFact } from '@resume-builder/domain';
 import type { ApplicationConfig } from '@resume-builder/config';
 import type { DB } from '@resume-builder/db';
 import { RenderingService } from '@resume-builder/rendering';
+import { fetchJobDescription } from '../services/job-description-fetcher.js';
 
 export async function generationRoutes(app: FastifyInstance, profileService: ICandidateProfileService, azureOpenAI?: ApplicationConfig['azureOpenAI'], db?: DB) {
   const generationService = new GenerationService(azureOpenAI, db);
@@ -12,18 +13,27 @@ export async function generationRoutes(app: FastifyInstance, profileService: ICa
 
   app.post<{
     Params: { profileId: string };
-    Body: { jobDescription: string; company: string; title: string; templateId?: string; language?: string };
+    Body: { jobDescription?: string; jobUrl?: string; company: string; title: string; templateId?: string; language?: string };
   }>(
     '/:profileId/generate',
     async (request, reply) => {
       const profile = await profileService.getProfile(request.params.profileId);
       if (!profile) { reply.status(404).send({ error: 'Profile not found' }); return; }
 
+      let jobDescription = request.body.jobDescription?.trim() ?? '';
+      if (jobDescription.length < 40 && request.body.jobUrl?.trim()) {
+        try { jobDescription = await fetchJobDescription(request.body.jobUrl.trim()); }
+        catch (error) { reply.status(422).send({ error: error instanceof Error ? error.message : 'Unable to fetch the job posting' }); return; }
+      }
+      if (jobDescription.length < 40) {
+        reply.status(400).send({ error: 'Provide a job description or a public job posting URL' });
+        return;
+      }
       const job = {
         id: `job-${Date.now()}`,
         userId: profile.userId,
-        source: 'TEXT_INPUT' as const,
-        rawText: request.body.jobDescription,
+        source: request.body.jobUrl?.trim() && !request.body.jobDescription?.trim() ? 'JOB_URL' as const : 'TEXT_INPUT' as const,
+        rawText: jobDescription,
         title: request.body.title,
         company: request.body.company,
         status: 'ANALYZED' as const,
