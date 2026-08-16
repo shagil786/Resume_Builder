@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 import type { ICandidateProfileService } from '../services/candidate.interface.js';
 import { GenerationService } from '../services/generation.service.js';
 import type { CandidateFact } from '@resume-builder/domain';
@@ -6,6 +6,29 @@ import type { ApplicationConfig } from '@resume-builder/config';
 import type { DB } from '@resume-builder/db';
 import { PdfRenderEngine, RenderingService } from '@resume-builder/rendering';
 import { fetchJobDescription } from '../services/job-description-fetcher.js';
+import type { OrchestrationResult } from '@resume-builder/ai';
+
+function generationFailureMessage(result: OrchestrationResult): string {
+  const failure = result.run.errors?.[0] ?? '';
+  const status = failure.match(/Azure OpenAI API error: (\d{3})/)?.[1];
+  if (status) return `Azure OpenAI request failed (HTTP ${status})`;
+
+  const failedStage = result.run.stages.find((stage) => stage.status === 'FAILED')?.stageName;
+  return failedStage
+    ? `Resume generation failed during ${failedStage.replaceAll('_', ' ')}`
+    : 'Resume generation failed';
+}
+
+function sendGenerationFailure(reply: FastifyReply, result: OrchestrationResult, statusCode = 502): void {
+  reply.status(statusCode).send({
+    error: {
+      code: 'RESUME_GENERATION_FAILED',
+      message: generationFailureMessage(result),
+      statusCode,
+      timestamp: new Date().toISOString(),
+    },
+  });
+}
 
 export async function generationRoutes(app: FastifyInstance, profileService: ICandidateProfileService, azureOpenAI?: ApplicationConfig['azureOpenAI'], db?: DB) {
   const generationService = new GenerationService(azureOpenAI, db);
@@ -44,6 +67,10 @@ export async function generationRoutes(app: FastifyInstance, profileService: ICa
       const facts: CandidateFact[] = factsResult.facts;
       try {
         const result = await generationService.generate(profile, job, facts, request.body.templateId ?? 'modern-professional', request.body.language);
+        if (result.run.status !== 'COMPLETED') {
+          sendGenerationFailure(reply, result);
+          return;
+        }
         return result;
       } catch (error) {
         const message = error instanceof Error ? error.message : '';
@@ -72,6 +99,16 @@ export async function generationRoutes(app: FastifyInstance, profileService: ICa
   );
 
   app.get<{ Params: { profileId: string; runId: string } }>('/:profileId/generations/:runId/preview', async (request, reply) => {
+    const run = await generationService.getRun(request.params.runId);
+    if (run?.profileId === request.params.profileId && run.status !== 'COMPLETED') {
+      sendGenerationFailure(reply, {
+        run,
+        resume: { sections: [], metadata: { factUsageMap: {} } },
+        factCheck: { valid: false, issues: [] },
+        matchEvaluation: null,
+      }, 409);
+      return;
+    }
     const result = await generationService.getResult(request.params.runId);
     if (!result || result.run.profileId !== request.params.profileId) {
       reply.status(404).send({ error: 'Generated resume not found' });
@@ -82,6 +119,16 @@ export async function generationRoutes(app: FastifyInstance, profileService: ICa
   });
 
   app.get<{ Params: { profileId: string; runId: string } }>('/:profileId/generations/:runId/preview/pdf', async (request, reply) => {
+    const run = await generationService.getRun(request.params.runId);
+    if (run?.profileId === request.params.profileId && run.status !== 'COMPLETED') {
+      sendGenerationFailure(reply, {
+        run,
+        resume: { sections: [], metadata: { factUsageMap: {} } },
+        factCheck: { valid: false, issues: [] },
+        matchEvaluation: null,
+      }, 409);
+      return;
+    }
     const result = await generationService.getResult(request.params.runId);
     if (!result || result.run.profileId !== request.params.profileId) {
       reply.status(404).send({ error: 'Generated resume not found' });
