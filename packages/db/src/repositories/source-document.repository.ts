@@ -52,6 +52,8 @@ export function createSourceDocumentRepository(db: DB | TX): ISourceDocumentRepo
           size: data.size,
           storagePath: data.storagePath,
           checksum: data.checksum,
+          processingError: data.processingError,
+          extractedAt: data.extractedAt,
         })
         .where(eq(sourceDocuments.id, id))
         .returning();

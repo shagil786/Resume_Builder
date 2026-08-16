@@ -108,6 +108,7 @@ export class DocumentService {
 
     let processResult: ProcessDocumentOutput | undefined;
     if (this.config.docIntel) {
+      let processingError: string | undefined;
       try {
         processResult = await this.processDocument(profileId, document.id, buffer, mimeType, filename);
         const storedFacts = [];
@@ -136,11 +137,12 @@ export class DocumentService {
         this.logger.info('Document processed and facts stored', { factCount: processResult.facts.length });
       } catch (err) {
         this.logger.error('Document processing failed', { error: err });
-        document = { ...document, status: 'FAILED' };
+        processingError = safeProcessingError(err);
+        document = { ...document, status: 'FAILED', processingError };
         if (uow) {
           try {
             await uow.sourceDocuments.updateStatus(document.id, 'FAILED');
-            await uow.sourceDocuments.update(document.id, { processingError: 'Document processing failed' });
+            await uow.sourceDocuments.update(document.id, { processingError });
           } catch (statusError) {
             // Do not turn a recoverable processing failure into an HTTP 500.
             this.logger.error('Unable to persist failed document status', { error: statusError });
@@ -168,6 +170,16 @@ export class DocumentService {
 
     return processor.process({ buffer, mimeType, filename, profileId });
   }
+}
+
+function safeProcessingError(error: unknown): string {
+  const message = error instanceof Error ? error.message : '';
+  const status = message.match(/(?:API error|Polling failed): (\d{3})/)?.[1];
+  if (status) return `Document Intelligence request failed (HTTP ${status})`;
+  if (message.includes('Operation-Location')) return 'Document Intelligence did not return an operation location';
+  if (message.includes('timed out')) return 'Document Intelligence processing timed out';
+  if (message.includes('analysis failed')) return 'Document Intelligence analysis failed';
+  return 'Document Intelligence processing failed';
 }
 
 function uploadStageError(stage: string, cause: unknown): Error & { uploadStage?: string } {

@@ -52,6 +52,7 @@ export async function documentRoutes(
           filename: result.document.filename,
           status: result.document.status,
           factCount: result.processResult?.facts.length ?? 0,
+          processingError: result.document.processingError,
         });
       } catch (error) {
         const uploadStage = typeof error === 'object' && error !== null && 'uploadStage' in error && typeof error.uploadStage === 'string'
