@@ -38,7 +38,15 @@ Rules:
 - Only select facts from the provided candidate evidence
 - Do not invent or suggest fabricated content
 - Prioritize facts that match job requirements
-- Match the seniority level of the target role`,
+- Match the seniority level of the target role
+
+Return only a JSON object with exactly these fields:
+- targetRole: string
+- emphasize: array of strings
+- deemphasize: array of strings
+- experiencePriority: array of strings
+- selectedFacts: array of candidate fact IDs from the provided evidence
+- sectionBudget: object with numeric summary, experience, projects, and skills budgets`,
 });
 
 registerPrompt('resume-writer-system', {

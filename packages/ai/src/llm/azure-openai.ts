@@ -15,6 +15,7 @@ export function createAzureOpenAIClient(config: {
       const requestBody: Record<string, unknown> = {
         messages,
         max_completion_tokens: overrides?.maxTokens ?? 4000,
+        response_format: { type: 'json_object' },
       };
       if (!deployment.toLowerCase().startsWith('gpt-5')) {
         requestBody.temperature = overrides?.temperature ?? 0.2;
