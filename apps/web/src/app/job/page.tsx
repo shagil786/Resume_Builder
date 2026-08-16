@@ -73,8 +73,8 @@ export default function JobPage() {
         </div>
 
         <div>
-          <label className="field-label">Job description <span className="text-[#b42318]">*</span></label>
-          <textarea value={text} onChange={e => setText(e.target.value)} rows={8}
+          <label htmlFor="job-description" className="field-label">Job description <span className="text-[#b42318]">*</span></label>
+          <textarea id="job-description" value={text} onChange={e => setText(e.target.value)} rows={8}
             placeholder="Paste the full job description here..."
             required minLength={40} className="field-control min-h-44 resize-y" />
           <div className="mt-2 flex justify-between gap-3 text-xs text-[#8b9995]"><span>Include responsibilities and requirements for a stronger match.</span><span>{text.length} characters</span></div>
