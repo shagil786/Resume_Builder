@@ -97,7 +97,7 @@ async function buildApp() {
     service = new CandidateProfileService();
   }
 
-  await app.register(async (instance) => authRoutes(instance, db));
+  await app.register(async (instance) => authRoutes(instance, db), { prefix: '/api/v1' });
 
   const searchSync = new SearchSyncService(searchConfig ?? undefined);
   await bootstrapStage('search', () => searchSync.initialize());

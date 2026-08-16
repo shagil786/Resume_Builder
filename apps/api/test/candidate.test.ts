@@ -9,7 +9,7 @@ describe('Candidate API', () => {
 
   beforeAll(async () => {
     app = await createTestApp();
-    const auth = await app.inject({ method: 'POST', url: '/auth/register', payload: { email: 'candidate-test@example.com', password: 'pass12345', name: 'Candidate' } });
+    const auth = await app.inject({ method: 'POST', url: '/api/v1/auth/register', payload: { email: 'candidate-test@example.com', password: 'pass12345', name: 'Candidate' } });
     token = auth.json().token;
   });
   afterAll(async () => { await app.close(); });
@@ -28,7 +28,7 @@ describe('Candidate API', () => {
   test('rejects access to another or missing profile', async () => {
     const missing = await app.inject({ method: 'GET', url: '/api/v1/candidates/missing-id', headers: authHeaders() });
     expect(missing.statusCode).toBe(404);
-    const otherAuth = await app.inject({ method: 'POST', url: '/auth/register', payload: { email: 'other-test@example.com', password: 'pass12345', name: 'Other' } });
+    const otherAuth = await app.inject({ method: 'POST', url: '/api/v1/auth/register', payload: { email: 'other-test@example.com', password: 'pass12345', name: 'Other' } });
     const forbidden = await app.inject({ method: 'GET', url: `/api/v1/candidates/${profileId}`, headers: { authorization: `Bearer ${otherAuth.json().token}` } });
     expect(forbidden.statusCode).toBe(404);
   });

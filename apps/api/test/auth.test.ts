@@ -10,7 +10,7 @@ describe('Auth Flow', () => {
   afterAll(async () => { await app.close(); });
 
   test('register creates a user and returns a token', async () => {
-    const res = await app.inject({ method: 'POST', url: '/auth/register', payload: { email: 'auth-test@example.com', password: 'pass12345', name: 'Test User' } });
+    const res = await app.inject({ method: 'POST', url: '/api/v1/auth/register', payload: { email: 'auth-test@example.com', password: 'pass12345', name: 'Test User' } });
     expect(res.statusCode).toBe(201);
     const body = res.json();
     expect(body.token).toBeDefined();
@@ -19,23 +19,23 @@ describe('Auth Flow', () => {
   });
 
   test('rejects duplicate email and wrong password', async () => {
-    const duplicate = await app.inject({ method: 'POST', url: '/auth/register', payload: { email: 'auth-test@example.com', password: 'pass12345', name: 'Another' } });
+    const duplicate = await app.inject({ method: 'POST', url: '/api/v1/auth/register', payload: { email: 'auth-test@example.com', password: 'pass12345', name: 'Another' } });
     expect(duplicate.statusCode).toBe(409);
-    const wrongPassword = await app.inject({ method: 'POST', url: '/auth/login', payload: { email: 'auth-test@example.com', password: 'wrongpass' } });
+    const wrongPassword = await app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: { email: 'auth-test@example.com', password: 'wrongpass' } });
     expect(wrongPassword.statusCode).toBe(401);
   });
 
   test('login and auth/me work with a valid token', async () => {
-    const login = await app.inject({ method: 'POST', url: '/auth/login', payload: { email: 'auth-test@example.com', password: 'pass12345' } });
+    const login = await app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: { email: 'auth-test@example.com', password: 'pass12345' } });
     expect(login.statusCode).toBe(200);
     token = login.json().token;
-    const me = await app.inject({ method: 'GET', url: '/auth/me', headers: { authorization: `Bearer ${token}` } });
+    const me = await app.inject({ method: 'GET', url: '/api/v1/auth/me', headers: { authorization: `Bearer ${token}` } });
     expect(me.statusCode).toBe(200);
     expect(me.json().email).toBe('auth-test@example.com');
   });
 
   test('rejects unauthenticated requests', async () => {
-    const res = await app.inject({ method: 'GET', url: '/auth/me' });
+    const res = await app.inject({ method: 'GET', url: '/api/v1/auth/me' });
     expect(res.statusCode).toBe(401);
   });
 });

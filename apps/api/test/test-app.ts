@@ -16,7 +16,7 @@ export async function createTestApp(): Promise<FastifyInstance> {
   const searchSync = new SearchSyncService();
 
   await app.register(authPlugin, { secret: 'test-only-secret' });
-  await app.register(async instance => authRoutes(instance));
+  await app.register(async instance => authRoutes(instance), { prefix: '/api/v1' });
   app.setErrorHandler(errorHandler);
 
   const ownedProfile = async (request: { params: unknown; userId: string }, reply: { status: (code: number) => { send: (body: unknown) => unknown } }) => {
