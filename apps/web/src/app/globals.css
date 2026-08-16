@@ -1,1 +1,22 @@
 @import "tailwindcss";
+
+:root {
+  --ink: #132238;
+  --muted: #64748b;
+  --line: #dbe4ee;
+  --paper: #ffffff;
+  --canvas: #f5f7fa;
+  --accent: #0f766e;
+  --accent-soft: #e6f4f1;
+}
+
+* { box-sizing: border-box; }
+
+body { color: var(--ink); background: var(--canvas); }
+
+button, a, input, textarea { -webkit-tap-highlight-color: transparent; }
+
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 3px solid rgba(15, 118, 110, 0.35);
+  outline-offset: 2px;
+}
