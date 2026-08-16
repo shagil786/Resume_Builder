@@ -6,24 +6,29 @@ export function createAzureOpenAIClient(config: {
   deployment: string;
   apiVersion?: string;
 }): LLMClient {
-  const apiVersion = config.apiVersion ?? '2025-01-01-preview';
+  const apiVersion = config.apiVersion ?? '2025-04-01-preview';
   const endpoint = config.endpoint.replace(/\/(?:openai\/v1|openai)\/?$/, '');
 
   return {
     async complete(messages: LLMMessage[], overrides): Promise<LLMResponse> {
+      const deployment = config.deployment;
+      const requestBody: Record<string, unknown> = {
+        messages,
+        max_completion_tokens: overrides?.maxTokens ?? 4000,
+      };
+      if (!deployment.toLowerCase().startsWith('gpt-5')) {
+        requestBody.temperature = overrides?.temperature ?? 0.2;
+      }
+
       const response = await fetch(
-        `${endpoint}/openai/deployments/${overrides?.model ?? config.deployment}/chat/completions?api-version=${apiVersion}`,
+        `${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'api-key': config.apiKey,
           },
-          body: JSON.stringify({
-            messages,
-            temperature: overrides?.temperature ?? 0.2,
-            max_tokens: overrides?.maxTokens ?? 4000,
-          }),
+          body: JSON.stringify(requestBody),
         }
       );
 
