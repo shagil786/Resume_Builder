@@ -44,7 +44,11 @@ async function handler(request: HttpRequest, context: InvocationContext): Promis
   try {
     appPromise ??= buildApp();
     const fastify = await appPromise;
-    const body = ['GET', 'HEAD'].includes(request.method) ? undefined : await request.text();
+    // Multipart uploads must remain binary. Reading the body as text corrupts
+    // PDF/DOCX bytes before Fastify's multipart parser receives them.
+    const body = ['GET', 'HEAD'].includes(request.method)
+      ? undefined
+      : Buffer.from(await request.arrayBuffer());
     const injectOptions: InjectOptions = {
       method: request.method.toUpperCase() as InjectOptions['method'],
       url: request.url,
