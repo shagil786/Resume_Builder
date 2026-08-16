@@ -44,8 +44,9 @@ describe('Candidate API', () => {
     expect(rendered.body).toContain('TypeScript');
   });
 
-  test('protected routes reject missing authentication', async () => {
+  test('template catalog is public while profile routes require authentication', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/v1/candidates/templates' });
-    expect(res.statusCode).toBe(401);
+    expect(res.statusCode).toBe(200);
+    expect(res.json().templates.length).toBeGreaterThan(0);
   });
 });

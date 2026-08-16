@@ -3,7 +3,7 @@ import authPlugin from '../src/plugins/auth.js';
 import { authRoutes } from '../src/routes/auth.routes.js';
 import { candidateRoutes } from '../src/routes/candidate.routes.js';
 import { generationRoutes } from '../src/routes/generation.routes.js';
-import { renderingRoutes } from '../src/routes/rendering.routes.js';
+import { renderingRoutes, templateRoutes } from '../src/routes/rendering.routes.js';
 import { documentRoutes } from '../src/routes/document.routes.js';
 import { coverLetterRoutes } from '../src/routes/cover-letter.routes.js';
 import { CandidateProfileService } from '../src/services/candidate.service.js';
@@ -17,6 +17,7 @@ export async function createTestApp(): Promise<FastifyInstance> {
 
   await app.register(authPlugin, { secret: 'test-only-secret' });
   await app.register(async instance => authRoutes(instance), { prefix: '/api/v1' });
+  await app.register(async instance => templateRoutes(instance), { prefix: '/api/v1/candidates' });
   app.setErrorHandler(errorHandler);
 
   const ownedProfile = async (request: { params: unknown; userId: string }, reply: { status: (code: number) => { send: (body: unknown) => unknown } }) => {

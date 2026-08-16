@@ -12,7 +12,7 @@ import authPlugin from './plugins/auth.js';
 import { authRoutes } from './routes/auth.routes.js';
 import { candidateRoutes } from './routes/candidate.routes.js';
 import { generationRoutes } from './routes/generation.routes.js';
-import { renderingRoutes } from './routes/rendering.routes.js';
+import { renderingRoutes, templateRoutes } from './routes/rendering.routes.js';
 import { documentRoutes } from './routes/document.routes.js';
 import { coverLetterRoutes } from './routes/cover-letter.routes.js';
 import type { DocumentServiceConfig } from './services/document.service.js';
@@ -98,6 +98,7 @@ async function buildApp() {
   }
 
   await app.register(async (instance) => authRoutes(instance, db), { prefix: '/api/v1' });
+  await app.register(async (instance) => templateRoutes(instance), { prefix: '/api/v1/candidates' });
 
   const searchSync = new SearchSyncService(searchConfig ?? undefined);
   await bootstrapStage('search', () => searchSync.initialize());

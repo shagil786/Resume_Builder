@@ -46,17 +46,6 @@ export async function renderingRoutes(app: FastifyInstance, profileService: ICan
   const renderer = new RenderingService();
   const pdfEngine = new PdfRenderEngine();
 
-  app.get('/templates', async () => {
-    return { templates: renderer.listTemplates() };
-  });
-
-  app.get('/templates/:templateId', async (request, reply) => {
-    const { templateId } = request.params as { templateId: string };
-    const template = renderer.getTemplate(templateId);
-    if (!template) { reply.status(404).send({ error: 'Template not found' }); return; }
-    return template;
-  });
-
   app.post<{
     Params: { profileId: string };
     Body: { templateId?: string };
@@ -89,4 +78,17 @@ export async function renderingRoutes(app: FastifyInstance, profileService: ICan
       return pdf;
     }
   );
+}
+
+export async function templateRoutes(app: FastifyInstance) {
+  const renderer = new RenderingService();
+
+  app.get('/templates', async () => ({ templates: renderer.listTemplates() }));
+
+  app.get('/templates/:templateId', async (request, reply) => {
+    const { templateId } = request.params as { templateId: string };
+    const template = renderer.getTemplate(templateId);
+    if (!template) { reply.status(404).send({ error: 'Template not found' }); return; }
+    return template;
+  });
 }
