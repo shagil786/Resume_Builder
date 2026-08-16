@@ -17,11 +17,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="min-h-screen bg-gray-50 font-sans antialiased">
         <header className="bg-slate-900 text-white">
-          <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
-            <Link href="/" className="text-lg font-bold tracking-tight">Resume Builder</Link>
-            <nav className="flex gap-5 text-sm text-slate-300">
+          <div className="mx-auto flex max-w-5xl flex-col gap-3 px-6 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <Link href="/" className="whitespace-nowrap text-lg font-bold tracking-tight">Resume Builder</Link>
+            <nav className="flex w-full gap-5 overflow-x-auto pb-1 text-sm text-slate-300 sm:w-auto sm:pb-0">
               {navItems.map(item => (
-                <Link key={item.href} href={item.href} className="hover:text-white transition-colors">{item.label}</Link>
+                <Link key={item.href} href={item.href} className="shrink-0 whitespace-nowrap hover:text-white transition-colors">{item.label}</Link>
               ))}
             </nav>
           </div>
