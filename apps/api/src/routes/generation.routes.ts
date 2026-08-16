@@ -4,9 +4,11 @@ import { GenerationService } from '../services/generation.service.js';
 import type { CandidateFact } from '@resume-builder/domain';
 import type { ApplicationConfig } from '@resume-builder/config';
 import type { DB } from '@resume-builder/db';
+import { RenderingService } from '@resume-builder/rendering';
 
 export async function generationRoutes(app: FastifyInstance, profileService: ICandidateProfileService, azureOpenAI?: ApplicationConfig['azureOpenAI'], db?: DB) {
   const generationService = new GenerationService(azureOpenAI, db);
+  const renderer = new RenderingService();
 
   app.post<{
     Params: { profileId: string };
@@ -44,4 +46,27 @@ export async function generationRoutes(app: FastifyInstance, profileService: ICa
       return run;
     }
   );
+
+  app.get<{ Params: { profileId: string; runId: string } }>('/:profileId/generations/:runId/preview', async (request, reply) => {
+    const result = await generationService.getResult(request.params.runId);
+    if (!result || result.run.profileId !== request.params.profileId) {
+      reply.status(404).send({ error: 'Generated resume not found' });
+      return;
+    }
+    reply.header('Content-Type', 'text/html');
+    return renderer.render(result.resume, result.run.templateId).html;
+  });
+
+  app.get<{ Params: { profileId: string } }>('/:profileId/generations', async (request) => {
+    return { runs: await generationService.listRuns(request.params.profileId) };
+  });
+
+  app.get<{ Params: { profileId: string; runId: string } }>('/:profileId/generations/:runId', async (request, reply) => {
+    const result = await generationService.getResult(request.params.runId);
+    if (!result || result.run.profileId !== request.params.profileId) {
+      reply.status(404).send({ error: 'Generated resume not found' });
+      return;
+    }
+    return result;
+  });
 }

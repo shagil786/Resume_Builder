@@ -8,6 +8,7 @@ import { createUnitOfWork } from '@resume-builder/db';
 export class GenerationService {
   private orchestrator: ResumeOrchestrator;
   private runs = new Map<string, GenerationRun>();
+  private results = new Map<string, OrchestrationResult>();
 
   constructor(azureOpenAI?: ApplicationConfig['azureOpenAI'], private db?: DB) {
     let llm: LLMClient;
@@ -34,11 +35,22 @@ export class GenerationService {
   ): Promise<OrchestrationResult> {
     const result = await this.orchestrator.generateResume(profile, job, facts, templateId, language);
     this.runs.set(result.run.id, result.run);
+    this.results.set(result.run.id, result);
     if (this.db) await createUnitOfWork(this.db).generationRuns.create(result.run);
     return result;
   }
 
   async getRun(runId: string): Promise<GenerationRun | null> {
     return this.runs.get(runId) ?? (this.db ? createUnitOfWork(this.db).generationRuns.findById(runId) : null);
+  }
+
+  async getResult(runId: string): Promise<OrchestrationResult | null> {
+    return this.results.get(runId) ?? null;
+  }
+
+  async listRuns(profileId: string): Promise<GenerationRun[]> {
+    const memoryRuns = Array.from(this.runs.values()).filter(run => run.profileId === profileId);
+    if (this.db) return createUnitOfWork(this.db).generationRuns.findByProfileId(profileId);
+    return memoryRuns.sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
   }
 }

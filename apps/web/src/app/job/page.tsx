@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { api } from '../../lib/api';
 import { AuthGuard } from '../components/auth-guard';
 
@@ -10,6 +11,7 @@ export default function JobPage() {
   const [title, setTitle] = useState('');
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,7 +20,14 @@ export default function JobPage() {
     if (!profileId) setResult('Create a profile first.');
     else {
       const response = await api.candidates.generate(profileId, { jobDescription: text, company, title });
-      setResult(response.error ?? 'Resume generated. Open Preview to review it.');
+      if (response.error) setResult(response.error);
+      else {
+        const runId = (response.data as { run?: { id?: string } } | undefined)?.run?.id;
+        if (runId) {
+          window.localStorage.setItem('resume_builder_generation_id', runId);
+          router.push('/preview');
+        } else setResult('Generation completed, but no preview was returned.');
+      }
     }
     setGenerating(false);
   };

@@ -6,6 +6,7 @@ import { generationRuns } from '../schema';
 export interface IGenerationRunRepository {
   create(run: GenerationRun): Promise<GenerationRun>;
   findById(id: string): Promise<GenerationRun | null>;
+  findByProfileId(profileId: string): Promise<GenerationRun[]>;
 }
 
 export function createGenerationRunRepository(db: DB | TX): IGenerationRunRepository {
@@ -39,6 +40,10 @@ export function createGenerationRunRepository(db: DB | TX): IGenerationRunReposi
     async findById(id) {
       const [row] = await db.select().from(generationRuns).where(eq(generationRuns.id, id)).limit(1);
       return row ? toDomain(row) : null;
+    },
+    async findByProfileId(profileId) {
+      const rows = await db.select().from(generationRuns).where(eq(generationRuns.profileId, profileId));
+      return rows.map(toDomain);
     },
   };
 }

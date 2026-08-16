@@ -1,16 +1,23 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
 import { AuthGuard } from '../components/auth-guard';
 
 export default function PreviewPage() {
   const [html, setHtml] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [profileId, setProfileId] = useState('profile-1');
+  const [profileId, setProfileId] = useState('');
+
+  useEffect(() => setProfileId(window.localStorage.getItem('resume_builder_profile_id') ?? ''), []);
 
   const loadPreview = async () => {
     setLoading(true);
     try {
+      const runId = window.localStorage.getItem('resume_builder_generation_id');
+      if (runId) {
+        const generatedHtml = await api.candidates.generationPreview(profileId, runId);
+        if (generatedHtml) { setHtml(generatedHtml); return; }
+      }
       const rendered = await api.render(profileId);
       if (rendered) setHtml(rendered);
     } finally {
