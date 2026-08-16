@@ -4,11 +4,10 @@ import type { SearchSyncService } from '../services/search-sync.service.js';
 
 export async function candidateRoutes(app: FastifyInstance, service: ICandidateProfileService, searchSync: SearchSyncService) {
 
-  app.post<{ Body: { userId: string; personalInfo: Record<string, unknown> } }>(
+  app.post<{ Body: { personalInfo: Record<string, unknown> } }>(
     '/',
     async (request, reply) => {
-      const { userId, personalInfo } = request.body;
-      const result = await service.createProfile(userId, personalInfo as never);
+      const result = await service.createProfile(request.userId, request.body.personalInfo as never);
       reply.status(201).send({ profileId: result.profileId, status: 'CREATED' });
     }
   );
@@ -24,7 +23,7 @@ export async function candidateRoutes(app: FastifyInstance, service: ICandidateP
 
   app.patch<{ Params: { profileId: string }; Body: Record<string, unknown> }>(
     '/:profileId',
-    async (request, reply) => {
+    async (request, _reply) => {
       await service.updateProfile(request.params.profileId, request.body as never);
       return { profileId: request.params.profileId, status: 'UPDATED' };
     }
@@ -32,7 +31,8 @@ export async function candidateRoutes(app: FastifyInstance, service: ICandidateP
 
   app.delete<{ Params: { profileId: string } }>(
     '/:profileId',
-    async (_request, reply) => {
+    async (request, reply) => {
+      await service.deleteProfile(request.params.profileId);
       reply.status(204).send();
     }
   );
@@ -79,7 +79,7 @@ export async function candidateRoutes(app: FastifyInstance, service: ICandidateP
 
   app.post<{ Params: { profileId: string }; Body: { query: string } }>(
     '/:profileId/facts/search',
-    async (request, reply) => {
+    async (request, _reply) => {
       const result = await searchSync.searchFacts(request.params.profileId, request.body.query);
       if (result.total === 0) {
         return service.searchFacts(request.params.profileId, request.body.query);
@@ -90,7 +90,7 @@ export async function candidateRoutes(app: FastifyInstance, service: ICandidateP
 
   app.patch<{ Params: { profileId: string; factId: string }; Body: { status: string; verificationNotes?: string } }>(
     '/:profileId/facts/:factId/status',
-    async (request, reply) => {
+    async (request, _reply) => {
       await service.updateFactStatus(request.params.factId, request.body.status, request.body.verificationNotes);
       return { status: 'UPDATED' };
     }

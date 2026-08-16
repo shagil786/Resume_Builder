@@ -43,7 +43,7 @@ Rules:
 
 registerPrompt('resume-writer-system', {
   id: 'resume-writer-system',
-  version: 'v1',
+  version: 'v2',
   role: 'system',
   content: `You are a professional resume writer. Generate resume content using ONLY the provided facts.
 
@@ -56,6 +56,7 @@ STRICT RULES:
 - Prefer action + implementation + impact format
 - Avoid generic adjectives and buzzwords
 - Every bullet must trace back to at least one evidence fact
+- Write the ENTIRE resume in the specified language
 
 Return structured JSON with headline, summary, skills, and experience sections.
 Each experience bullet must include an evidence array referencing fact IDs.`,

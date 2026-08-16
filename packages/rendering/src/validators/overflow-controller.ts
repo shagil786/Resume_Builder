@@ -1,4 +1,4 @@
-import type { ResumeContent, ResumeSection } from '@resume-builder/domain';
+import type { ResumeContent } from '@resume-builder/domain';
 import type { TemplateDefinition, OverflowResult } from '../templates';
 
 export class OverflowController {
@@ -12,7 +12,7 @@ export class OverflowController {
       (sum, s) => sum + s.items.reduce((is, item) =>
         is + 1 + (item.bulletPoints?.length ?? 0), 0), 0
     );
-    const linesPerPage = pageContentHeight / (template.typography.body.lineHeight * template.typography.body.size);
+    const linesPerPage = pageContentHeight / ((template.typography.body.lineHeight ?? 1.4) * template.typography.body.size);
     const estimatedPages = Math.ceil(totalLines / linesPerPage);
 
     return {
@@ -24,7 +24,7 @@ export class OverflowController {
     };
   }
 
-  createCompressionPlan(content: ResumeContent, template: TemplateDefinition, overflowPixels: number): {
+  createCompressionPlan(content: ResumeContent, _template: TemplateDefinition, overflowPixels: number): {
     actions: string[];
     compressed: ResumeContent;
   } {
@@ -54,11 +54,11 @@ export class OverflowController {
     let height = 0;
     for (const section of content.sections) {
       height += 24;
-      height += t.typography.sectionTitle.size * t.typography.sectionTitle.lineHeight + 12;
+      height += t.typography.sectionTitle.size * (t.typography.sectionTitle.lineHeight ?? 1.4) + 12;
       for (const item of section.items) {
-        height += t.typography.heading.size * t.typography.heading.lineHeight + 4;
-        for (const bullet of item.bulletPoints ?? []) {
-          height += t.typography.bullet.size * t.typography.bullet.lineHeight + 4;
+        height += t.typography.heading.size * (t.typography.heading.lineHeight ?? 1.4) + 4;
+        for (const _bullet of item.bulletPoints ?? []) {
+          height += t.typography.bullet.size * (t.typography.bullet.lineHeight ?? 1.4) + 4;
         }
         height += 8;
       }

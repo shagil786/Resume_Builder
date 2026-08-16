@@ -24,6 +24,11 @@ export interface OrchestrationResult {
   matchEvaluation: MatchEvaluation | null;
 }
 
+interface StageResult {
+  log: GenerationStageLog;
+  output: unknown;
+}
+
 export class ResumeOrchestrator {
   private jobAnalyzer: JobAnalyzer;
   private strategist: ResumeStrategist;
@@ -45,7 +50,8 @@ export class ResumeOrchestrator {
     profile: CandidateProfile,
     job: Job,
     facts: CandidateFact[],
-    templateId: string
+    templateId: string,
+    language?: string
   ): Promise<OrchestrationResult> {
     const startedAt = new Date();
     const runId = crypto.randomUUID();
@@ -58,28 +64,32 @@ export class ResumeOrchestrator {
         const analysis = await this.jobAnalyzer.analyze(job);
         return { output: analysis, refs: [job.id] };
       });
-      stages.push(stage1);
+      stages.push(stage1.log);
+      if (stage1.log.status === 'FAILED') throw new Error(stage1.log.error ?? 'Job analysis failed');
       const jobAnalysis = stage1.output as JobAnalysis;
 
       const stage2 = await this.runStage('resume_strategy', async () => {
         const strategy = await this.strategist.plan(profile, jobAnalysis);
         return { output: strategy, refs: [profile.id, job.id] };
       });
-      stages.push(stage2);
+      stages.push(stage2.log);
+      if (stage2.log.status === 'FAILED') throw new Error(stage2.log.error ?? 'Resume strategy failed');
       const strategy = stage2.output as ResumeStrategy;
 
       const stage3 = await this.runStage('content_generation', async () => {
-        const resume = await this.writer.write(profile, strategy, facts);
+        const resume = await this.writer.write(profile, strategy, facts, language);
         return { output: resume, refs: strategy.selectedFacts };
       });
-      stages.push(stage3);
+      stages.push(stage3.log);
+      if (stage3.log.status === 'FAILED') throw new Error(stage3.log.error ?? 'Content generation failed');
       const resume = stage3.output as ResumeContent;
 
       const stage4 = await this.runStage('fact_verification', async () => {
         const result = await this.factChecker.validate(resume, facts);
         return { output: result, refs: strategy.selectedFacts };
       });
-      stages.push(stage4);
+      stages.push(stage4.log);
+      if (stage4.log.status === 'FAILED') throw new Error(stage4.log.error ?? 'Fact verification failed');
       const factCheck = stage4.output as { valid: boolean; issues: { claim: string; reason: string; severity: string }[] };
 
       let matchEvaluation: MatchEvaluation | null = null;
@@ -88,7 +98,8 @@ export class ResumeOrchestrator {
           const evaluation = await this.matchEvaluator.evaluate(profile, resume, jobAnalysis);
           return { output: evaluation, refs: [job.id] };
         });
-        stages.push(stage5);
+        stages.push(stage5.log);
+        if (stage5.log.status === 'FAILED') throw new Error(stage5.log.error ?? 'Job fit evaluation failed');
         matchEvaluation = stage5.output as MatchEvaluation;
       }
 
@@ -135,24 +146,30 @@ export class ResumeOrchestrator {
   private async runStage(
     stageName: string,
     fn: () => Promise<{ output: unknown; refs: string[] }>
-  ): Promise<GenerationStageLog> {
+  ): Promise<StageResult> {
     const startedAt = new Date();
     try {
       const result = await fn();
       return {
-        stageName,
-        startedAt,
-        completedAt: new Date(),
-        status: 'COMPLETED',
-        outputRefs: result.refs,
+        log: {
+          stageName,
+          startedAt,
+          completedAt: new Date(),
+          status: 'COMPLETED',
+          outputRefs: result.refs,
+        },
+        output: result.output,
       };
     } catch (error) {
       return {
-        stageName,
-        startedAt,
-        completedAt: new Date(),
-        status: 'FAILED',
-        error: error instanceof Error ? error.message : String(error),
+        log: {
+          stageName,
+          startedAt,
+          completedAt: new Date(),
+          status: 'FAILED',
+          error: error instanceof Error ? error.message : String(error),
+        },
+        output: undefined,
       };
     }
   }

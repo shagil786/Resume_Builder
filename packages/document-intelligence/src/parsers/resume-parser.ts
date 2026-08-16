@@ -41,7 +41,7 @@ function extractPersonalInfo(content: string, paragraphs: Paragraph[]): ParseRes
   return info;
 }
 
-function extractSummary(content: string, paragraphs: Paragraph[]): string | undefined {
+function extractSummary(_content: string, paragraphs: Paragraph[]): string | undefined {
   const firstHeading = paragraphs.find(p => p.role === 'sectionHeading');
   if (!firstHeading) return undefined;
 
@@ -54,7 +54,7 @@ function extractSummary(content: string, paragraphs: Paragraph[]): string | unde
 
 export function extractFacts(
   doc: AnalyzedDocument,
-  profileId: string,
+  _profileId: string,
   sourceRef: string
 ): ParseResult {
   const personalInfo = extractPersonalInfo(doc.content, doc.paragraphs);

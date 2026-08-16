@@ -1,18 +1,20 @@
-import type { CandidateProfile, CandidateFact, Job } from '@resume-builder/domain';
+import type { CandidateProfile, CandidateFact, Job, GenerationRun } from '@resume-builder/domain';
 import { createLLMClient, createAzureOpenAIClient, ResumeOrchestrator } from '@resume-builder/ai';
 import type { OrchestrationResult, LLMClient } from '@resume-builder/ai';
+import type { ApplicationConfig } from '@resume-builder/config';
 
 export class GenerationService {
   private orchestrator: ResumeOrchestrator;
+  private runs = new Map<string, GenerationRun>();
 
-  constructor() {
+  constructor(azureOpenAI?: ApplicationConfig['azureOpenAI']) {
     let llm: LLMClient;
 
-    if (process.env.AZURE_OPENAI_ENDPOINT && process.env.AZURE_OPENAI_KEY) {
+    if (azureOpenAI?.endpoint) {
       llm = createAzureOpenAIClient({
-        endpoint: process.env.AZURE_OPENAI_ENDPOINT,
-        apiKey: process.env.AZURE_OPENAI_KEY,
-        deployment: process.env.AZURE_OPENAI_DEPLOYMENT ?? 'gpt-4o',
+        endpoint: azureOpenAI.endpoint,
+        apiKey: azureOpenAI.apiKey,
+        deployment: azureOpenAI.deployment ?? 'gpt-4o',
       });
     } else {
       llm = createLLMClient({ model: 'gpt-4o-mini', temperature: 0.2 });
@@ -25,8 +27,15 @@ export class GenerationService {
     profile: CandidateProfile,
     job: Job,
     facts: CandidateFact[],
-    templateId: string
+    templateId: string,
+    language?: string
   ): Promise<OrchestrationResult> {
-    return this.orchestrator.generateResume(profile, job, facts, templateId);
+    const result = await this.orchestrator.generateResume(profile, job, facts, templateId, language);
+    this.runs.set(result.run.id, result.run);
+    return result;
+  }
+
+  getRun(runId: string): GenerationRun | null {
+    return this.runs.get(runId) ?? null;
   }
 }

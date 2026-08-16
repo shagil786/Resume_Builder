@@ -1,6 +1,7 @@
 import { FIXTURES } from './fixtures/dataset.js';
 import { scoreFactAccuracy, scoreTemplateConformance, scoreJobCoverage } from './scorers/index.js';
 import type { ScorerResult } from './scorers/index.js';
+import type { CandidateFact } from '@resume-builder/domain';
 
 interface EvaluationReport {
   timestamp: string;
@@ -49,13 +50,6 @@ function runEvaluation(): EvaluationReport {
       evidenceCoverage,
     });
   }
-
-  const avg = (key: keyof EvaluationReport['results'][0]) => {
-    if (typeof results[0][key] === 'number') {
-      return results.reduce((sum, r) => sum + (r[key] as number), 0) / results.length;
-    }
-    return 0;
-  };
 
   return {
     timestamp: new Date().toISOString(),

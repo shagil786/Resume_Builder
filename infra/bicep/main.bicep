@@ -48,16 +48,21 @@ module containerApps './modules/container-apps.bicep' = {
     containerImage: containerImage
     dbEndpoint: database.outputs.endpoint
     dbName: database.outputs.name
-    dbUser: 'postgres'
-    dbPassword: postgresAdminPassword
     storageAccountName: storage.outputs.accountName
-    storageAccountKey: storage.outputs.accountKey
     searchEndpoint: search.outputs.endpoint
-    searchKey: search.outputs.adminKey
     openAiEndpoint: openai.outputs.endpoint
-    openAiKey: openai.outputs.key
     docIntelEndpoint: docIntel.outputs.endpoint
-    docIntelKey: docIntel.outputs.key
+    keyVaultUri: keyvault.outputs.uri
+  }
+}
+
+resource keyVaultSecretsUser 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceId('Microsoft.KeyVault/vaults', keyvault.outputs.name), containerApps.outputs.principalId, 'Key Vault Secrets User')
+  scope: resourceId('Microsoft.KeyVault/vaults', keyvault.outputs.name)
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
+    principalId: containerApps.outputs.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 

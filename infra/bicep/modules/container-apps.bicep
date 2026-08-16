@@ -3,16 +3,11 @@ param environment string
 param containerImage string
 param dbEndpoint string
 param dbName string
-param dbUser string
-param dbPassword string
 param storageAccountName string
-param storageAccountKey string
 param searchEndpoint string
-param searchKey string
 param openAiEndpoint string
-param openAiKey string
 param docIntelEndpoint string
-param docIntelKey string
+param keyVaultUri string
 
 resource containerEnv 'Microsoft.App/managedEnvironments@2024-10-02-preview' = {
   name: 'resume-builder-env-${environment}'
@@ -35,11 +30,13 @@ resource apiApp 'Microsoft.App/containerApps@2024-10-02-preview' = {
       }
       registries: []
       secrets: [
-        { name: 'db-password', value: dbPassword }
-        { name: 'storage-key', value: storageAccountKey }
-        { name: 'search-key', value: searchKey }
-        { name: 'openai-key', value: openAiKey }
-        { name: 'docintel-key', value: docIntelKey }
+        { name: 'db-password', keyVaultUrl: '${keyVaultUri}secrets/postgres-admin-password', identity: 'system' }
+        { name: 'db-user', keyVaultUrl: '${keyVaultUri}secrets/postgres-admin-username', identity: 'system' }
+        { name: 'storage-key', keyVaultUrl: '${keyVaultUri}secrets/blob-account-key', identity: 'system' }
+        { name: 'search-key', keyVaultUrl: '${keyVaultUri}secrets/search-admin-key', identity: 'system' }
+        { name: 'openai-key', keyVaultUrl: '${keyVaultUri}secrets/azure-openai-key', identity: 'system' }
+        { name: 'docintel-key', keyVaultUrl: '${keyVaultUri}secrets/document-intelligence-key', identity: 'system' }
+        { name: 'jwt-secret', keyVaultUrl: '${keyVaultUri}secrets/jwt-secret', identity: 'system' }
       ]
     }
     template: {
@@ -51,7 +48,7 @@ resource apiApp 'Microsoft.App/containerApps@2024-10-02-preview' = {
           { name: 'DATABASE_HOST', value: dbEndpoint }
           { name: 'DATABASE_PORT', value: '5432' }
           { name: 'DATABASE_NAME', value: dbName }
-          { name: 'DATABASE_USER', value: dbUser }
+          { name: 'DATABASE_USER', secretRef: 'db-user' }
           { name: 'DATABASE_PASSWORD', secretRef: 'db-password' }
           { name: 'BLOB_ACCOUNT_NAME', value: storageAccountName }
           { name: 'BLOB_ACCOUNT_KEY', secretRef: 'storage-key' }
@@ -59,10 +56,14 @@ resource apiApp 'Microsoft.App/containerApps@2024-10-02-preview' = {
           { name: 'SEARCH_ENDPOINT', value: searchEndpoint }
           { name: 'SEARCH_KEY', secretRef: 'search-key' }
           { name: 'SEARCH_INDEX', value: 'candidate-facts' }
-          { name: 'OPENAI_ENDPOINT', value: openAiEndpoint }
-          { name: 'OPENAI_KEY', secretRef: 'openai-key' }
+          { name: 'AZURE_OPENAI_ENDPOINT', value: openAiEndpoint }
+          { name: 'AZURE_OPENAI_KEY', secretRef: 'openai-key' }
+          { name: 'AZURE_OPENAI_DEPLOYMENT', value: 'gpt-4o' }
           { name: 'DOC_INTELLIGENCE_ENDPOINT', value: docIntelEndpoint }
           { name: 'DOC_INTELLIGENCE_KEY', secretRef: 'docintel-key' }
+          { name: 'KEY_VAULT_URL', value: keyVaultUri }
+          { name: 'DATABASE_SSL', value: 'true' }
+          { name: 'JWT_SECRET', secretRef: 'jwt-secret' }
         ]
       }]
       scale: {
@@ -78,3 +79,4 @@ resource apiApp 'Microsoft.App/containerApps@2024-10-02-preview' = {
 }
 
 output url string = 'https://${apiApp.properties.configuration.ingress.fqdn}'
+output principalId string = apiApp.identity.principalId

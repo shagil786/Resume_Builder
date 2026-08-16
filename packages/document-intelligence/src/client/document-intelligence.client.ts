@@ -164,14 +164,14 @@ function transformResult(result: {
   keyValuePairs: unknown[];
   pages: unknown[];
 }): AnalyzeResult {
-  const paragraphs: Paragraph[] = (result.paragraphs ?? []).map((p: Record<string, unknown>) => ({
+  const paragraphs: Paragraph[] = (result.paragraphs as Record<string, unknown>[] ?? []).map((p) => ({
     content: p.content as string,
     role: p.role as Paragraph['role'],
     boundingRegions: p.boundingRegions as Paragraph['boundingRegions'],
     confidence: (p.confidence as number) ?? 1,
   }));
 
-  const tables: Table[] = (result.tables ?? []).map((t: Record<string, unknown>) => ({
+  const tables: Table[] = (result.tables as Record<string, unknown>[] ?? []).map((t) => ({
     rowCount: t.rowCount as number,
     columnCount: t.columnCount as number,
     cells: (t.cells as Record<string, unknown>[]).map(c => ({
@@ -184,7 +184,7 @@ function transformResult(result: {
 
   const sections = extractSections(paragraphs);
 
-  const pages: Page[] = (result.pages ?? []).map((p: Record<string, unknown>) => ({
+  const pages: Page[] = (result.pages as Record<string, unknown>[] ?? []).map((p) => ({
     pageNumber: p.pageNumber as number,
     width: p.width as number,
     height: p.height as number,

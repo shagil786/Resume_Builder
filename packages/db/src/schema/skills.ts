@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, pgEnum, real, timestamp, integer } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, pgEnum, real, timestamp } from 'drizzle-orm/pg-core';
 import { candidateProfiles } from './candidate-profiles';
 
 export const skillProficiency = pgEnum('skill_proficiency', ['ENTRY', 'JUNIOR', 'INTERMEDIATE', 'SENIOR', 'EXPERT']);

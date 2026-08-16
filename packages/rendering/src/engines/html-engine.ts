@@ -1,5 +1,5 @@
 import type { ResumeContent, ResumeSection } from '@resume-builder/domain';
-import type { TemplateDefinition, OverflowResult } from '../templates';
+import type { TemplateDefinition } from '../templates';
 
 export class HtmlRenderEngine {
   render(content: ResumeContent, template: TemplateDefinition): string {
@@ -26,7 +26,7 @@ export class HtmlRenderEngine {
 </html>`;
   }
 
-  private renderSection(section: ResumeSection, t: TemplateDefinition): string {
+  private renderSection(section: ResumeSection, _t: TemplateDefinition): string {
     const itemsHtml = section.items.map(item => {
       if (item.bulletPoints && item.bulletPoints.length > 0) {
         const bullets = item.bulletPoints.map(b => `

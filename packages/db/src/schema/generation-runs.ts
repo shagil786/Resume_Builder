@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, pgEnum, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, timestamp, pgEnum, jsonb } from 'drizzle-orm/pg-core';
 import { candidateProfiles } from './candidate-profiles';
 import { resumeTemplates } from './resume-templates';
 import { jobs } from './jobs';

@@ -1,4 +1,4 @@
-import { eq, and, count } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import type { DB, TX } from './types';
 import { sourceDocuments } from '../schema';
 import type { SourceDocument } from '@resume-builder/domain';
@@ -38,6 +38,7 @@ export function createSourceDocumentRepository(db: DB | TX): ISourceDocumentRepo
         mimetype: data.mimetype,
         size: data.size,
         storagePath: data.storagePath ?? null,
+        status: data.status,
         checksum: data.checksum ?? null,
       }).returning();
       return dbRowToDocument(row[0]);

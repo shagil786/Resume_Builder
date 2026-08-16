@@ -1,9 +1,13 @@
-import { eq, and, or, like, gte, lte, inArray, sql, count } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import type { DB, TX } from './types';
-import { paginatedResult, paginate, repoError } from './utils';
-import type { PaginationParams, PaginatedResult } from './utils';
 import { candidateProfiles } from '../schema';
 import type { CandidateProfile } from '@resume-builder/domain';
+import { createWorkExperienceRepository } from './work-experience.repository';
+import { createProjectRepository } from './project.repository';
+import { createSkillRepository } from './skill.repository';
+import { createEducationRepository } from './education.repository';
+import { createCertificationRepository } from './certification.repository';
+import { createSourceDocumentRepository } from './source-document.repository';
 
 export interface IFactSearchFilters {
   factStatus?: string[];
@@ -15,28 +19,31 @@ export interface ICandidateProfileRepository {
   findById(id: string): Promise<CandidateProfile | null>;
   findByUserId(userId: string): Promise<CandidateProfile[]>;
   findAll(): Promise<CandidateProfile[]>;
-  create(data: Omit<CandidateProfile, 'id' | 'createdAt' | 'updatedAt'>): Promise<CandidateProfile>;
+  create(data: CandidateProfileCreate): Promise<CandidateProfile>;
   update(id: string, data: Partial<CandidateProfile>): Promise<CandidateProfile | null>;
   delete(id: string): Promise<boolean>;
   archive(id: string): Promise<boolean>;
   restore(id: string): Promise<boolean>;
 }
 
+export type CandidateProfileCreate = Pick<CandidateProfile, 'userId' | 'personalInfo' | 'visibility' | 'status'> &
+  Partial<Pick<CandidateProfile, 'summary'>>;
+
 export function createCandidateProfileRepository(db: DB | TX): ICandidateProfileRepository {
   return {
     async findById(id) {
       const row = await db.select().from(candidateProfiles).where(eq(candidateProfiles.id, id)).limit(1);
-      return row[0] ? dbRowToProfile(row[0]) : null;
+      return row[0] ? hydrateProfile(db, dbRowToProfile(row[0])) : null;
     },
 
     async findByUserId(userId) {
       const rows = await db.select().from(candidateProfiles).where(eq(candidateProfiles.userId, userId));
-      return rows.map(dbRowToProfile);
+      return Promise.all(rows.map(async row => hydrateProfile(db, dbRowToProfile(row))));
     },
 
     async findAll() {
       const rows = await db.select().from(candidateProfiles);
-      return rows.map(dbRowToProfile);
+      return Promise.all(rows.map(async row => hydrateProfile(db, dbRowToProfile(row))));
     },
 
     async create(data) {
@@ -47,7 +54,7 @@ export function createCandidateProfileRepository(db: DB | TX): ICandidateProfile
         visibility: data.visibility ?? 'PRIVATE',
         status: data.status ?? 'DRAFT',
       }).returning();
-      return dbRowToProfile(row[0]);
+      return hydrateProfile(db, dbRowToProfile(row[0]));
     },
 
     async update(id, data) {
@@ -100,4 +107,16 @@ function dbRowToProfile(row: typeof candidateProfiles.$inferSelect): CandidatePr
     archivedAt: row.archivedAt ?? undefined,
     latestProcessedAt: row.latestProcessedAt ?? undefined,
   };
+}
+
+async function hydrateProfile(db: DB | TX, profile: CandidateProfile): Promise<CandidateProfile> {
+  const [workExperience, projects, skills, education, certifications, sourceDocuments] = await Promise.all([
+    createWorkExperienceRepository(db).findByProfileId(profile.id),
+    createProjectRepository(db).findByProfileId(profile.id),
+    createSkillRepository(db).findByProfileId(profile.id),
+    createEducationRepository(db).findByProfileId(profile.id),
+    createCertificationRepository(db).findByProfileId(profile.id),
+    createSourceDocumentRepository(db).findByProfileId(profile.id),
+  ]);
+  return { ...profile, workExperience, projects, skills, education, certifications, sourceDocuments };
 }

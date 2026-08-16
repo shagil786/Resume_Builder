@@ -1,7 +1,7 @@
 import type { DB } from '@resume-builder/db';
 import { createUnitOfWork } from '@resume-builder/db';
-import type { ICandidateProfileService } from './candidate.interface';
-import type { CandidateProfile, CandidateFact, FactProvenance, PersonalInfo, WorkExperience, ProjectEntry, Skill, EducationEntry, Certification } from '@resume-builder/domain';
+import type { CertificationInput, EducationInput, ICandidateProfileService, ProjectInput, WorkExperienceInput } from './candidate.interface';
+import type { CandidateProfile, CandidateFact, FactProvenance, PersonalInfo, WorkExperience, Skill } from '@resume-builder/domain';
 
 export class DbCandidateProfileService implements ICandidateProfileService {
   constructor(private db: DB) {}
@@ -29,19 +29,19 @@ export class DbCandidateProfileService implements ICandidateProfileService {
     await createUnitOfWork(this.db).candidateProfiles.delete(profileId);
   }
 
-  async addExperience(profileId: string, data: Omit<WorkExperience, 'id' | 'bulletPoints' | 'profileId'>): Promise<{ experienceId: string }> {
+  async addExperience(profileId: string, data: WorkExperienceInput): Promise<{ experienceId: string }> {
     const uow = createUnitOfWork(this.db);
     const exp = await uow.workExperiences.create({
       ...data,
       profileId,
       startDate: new Date(data.startDate),
       endDate: data.endDate ? new Date(data.endDate) : undefined,
-      factIds: [],
+      factIds: data.factIds ?? [],
     });
     return { experienceId: exp.id };
   }
 
-  async updateExperience(profileId: string, experienceId: string, data: Partial<WorkExperience>): Promise<void> {
+  async updateExperience(_profileId: string, experienceId: string, data: Partial<WorkExperience>): Promise<void> {
     await createUnitOfWork(this.db).workExperiences.update(experienceId, data);
   }
 
@@ -49,14 +49,14 @@ export class DbCandidateProfileService implements ICandidateProfileService {
     await createUnitOfWork(this.db).workExperiences.delete(experienceId);
   }
 
-  async addProject(profileId: string, data: Omit<ProjectEntry, 'id' | 'bulletPoints' | 'profileId'>): Promise<{ projectId: string }> {
+  async addProject(profileId: string, data: ProjectInput): Promise<{ projectId: string }> {
     const uow = createUnitOfWork(this.db);
     const project = await uow.projects.create({
       ...data,
       profileId,
-      startDate: new Date(data.startDate),
+      startDate: new Date(data.startDate ?? Date.now()),
       endDate: data.endDate ? new Date(data.endDate) : undefined,
-      factIds: [],
+      factIds: data.factIds ?? [],
     });
     return { projectId: project.id };
   }
@@ -67,20 +67,21 @@ export class DbCandidateProfileService implements ICandidateProfileService {
     return { skillId: skill.id };
   }
 
-  async addEducation(profileId: string, data: Omit<EducationEntry, 'id' | 'profileId'>): Promise<{ educationId: string }> {
+  async addEducation(profileId: string, data: EducationInput): Promise<{ educationId: string }> {
     const uow = createUnitOfWork(this.db);
-    const edu = await uow.education.create({ ...data, profileId, startDate: new Date(data.startDate), endDate: new Date(data.endDate), factIds: [] });
+    const edu = await uow.education.create({ ...data, profileId, startDate: new Date(data.startDate ?? Date.now()), endDate: new Date(data.endDate ?? Date.now()), factIds: data.factIds ?? [] });
     return { educationId: edu.id };
   }
 
-  async addCertification(profileId: string, data: Omit<Certification, 'id' | 'profileId'>): Promise<{ certificationId: string }> {
+  async addCertification(profileId: string, data: CertificationInput): Promise<{ certificationId: string }> {
     const uow = createUnitOfWork(this.db);
-    const cert = await uow.certifications.create({ ...data, profileId, issueDate: new Date(data.issueDate), expiryDate: data.expiryDate ? new Date(data.expiryDate) : undefined, factIds: [] });
+    const cert = await uow.certifications.create({ ...data, profileId, issueDate: new Date(data.issueDate ?? Date.now()), expiryDate: data.expiryDate ? new Date(data.expiryDate) : undefined, factIds: data.factIds ?? [] });
     return { certificationId: cert.id };
   }
 
   async searchFacts(profileId: string, query: string): Promise<{ facts: CandidateFact[]; total: number }> {
-    return createUnitOfWork(this.db).candidateFacts.searchByText(profileId, query);
+    const result = await createUnitOfWork(this.db).candidateFacts.searchByText(profileId, query);
+    return { facts: result.data, total: result.total };
   }
 
   async updateFactStatus(factId: string, status: string, notes?: string): Promise<void> {

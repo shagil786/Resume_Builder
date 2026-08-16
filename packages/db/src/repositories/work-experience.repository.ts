@@ -1,6 +1,5 @@
-import { eq, and, gte, lte, count } from 'drizzle-orm';
+import { eq, and, gte, lte } from 'drizzle-orm';
 import type { DB, TX } from './types';
-import { repoError } from './utils';
 import { workExperiences } from '../schema';
 import type { WorkExperience } from '@resume-builder/domain';
 

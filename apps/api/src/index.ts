@@ -17,63 +17,61 @@ import { documentRoutes } from './routes/document.routes.js';
 import { coverLetterRoutes } from './routes/cover-letter.routes.js';
 import type { DocumentServiceConfig } from './services/document.service.js';
 import { errorHandler } from './plugins/error-handler.js';
+import { loadApplicationConfig } from '@resume-builder/config';
+import type { ApplicationConfig } from '@resume-builder/config';
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10);
 const HOST = process.env.HOST ?? '0.0.0.0';
 
-function loadDbConfig(): DBConfig | null {
-  if (!process.env.DATABASE_HOST) return null;
-  return {
-    host: process.env.DATABASE_HOST,
-    port: parseInt(process.env.DATABASE_PORT ?? '5432', 10),
-    database: process.env.DATABASE_NAME ?? 'resume_builder',
-    username: process.env.DATABASE_USER ?? 'postgres',
-    password: process.env.DATABASE_PASSWORD ?? 'postgres',
-    ssl: process.env.DATABASE_SSL === 'true',
-  };
+async function requireOwnedProfile(request: { params: unknown; userId: string }, reply: { status: (code: number) => { send: (body: unknown) => unknown } }, service: ICandidateProfileService) {
+  const profileId = (request.params as { profileId?: string }).profileId;
+  if (!profileId) return;
+  const profile = await service.getProfile(profileId);
+  if (!profile || profile.userId !== request.userId) {
+    reply.status(404).send({ error: 'Profile not found' });
+  }
 }
 
-function loadDocumentConfig(): DocumentServiceConfig {
-  const config: DocumentServiceConfig = {};
-  if (process.env.BLOB_ACCOUNT_NAME && process.env.BLOB_ACCOUNT_KEY) {
-    config.blob = {
-      accountName: process.env.BLOB_ACCOUNT_NAME,
-      accountKey: process.env.BLOB_ACCOUNT_KEY,
-      container: process.env.BLOB_CONTAINER ?? 'resumes',
+function loadDocumentConfig(config: ApplicationConfig): DocumentServiceConfig {
+  const documentConfig: DocumentServiceConfig = {};
+  if (config.blob.accountName) {
+    documentConfig.blob = {
+      accountName: config.blob.accountName,
+      accountKey: config.blob.accountKey,
+      container: config.blob.container ?? 'resumes',
     };
   }
-  if (process.env.DOC_INTELLIGENCE_ENDPOINT && process.env.DOC_INTELLIGENCE_KEY) {
-    config.docIntel = {
-      endpoint: process.env.DOC_INTELLIGENCE_ENDPOINT,
-      apiKey: process.env.DOC_INTELLIGENCE_KEY,
+  if (config.documentIntelligence.endpoint) {
+    documentConfig.docIntel = {
+      endpoint: config.documentIntelligence.endpoint,
+      apiKey: config.documentIntelligence.apiKey,
     };
   }
-  return config;
+  return documentConfig;
 }
 
-function loadSearchConfig(): SearchConfig | null {
-  if (!process.env.SEARCH_ENDPOINT || !process.env.SEARCH_KEY) return null;
+function loadSearchConfig(config: ApplicationConfig): SearchConfig | null {
+  if (!config.search.endpoint) return null;
   return {
-    endpoint: process.env.SEARCH_ENDPOINT,
-    apiKey: process.env.SEARCH_KEY,
-    indexName: process.env.SEARCH_INDEX ?? 'candidate-facts',
+    endpoint: config.search.endpoint,
+    apiKey: config.search.apiKey,
+    indexName: config.search.index ?? 'candidate-facts',
   };
 }
 
 async function buildApp() {
+  const config = await loadApplicationConfig();
   const app = Fastify({ logger: true });
 
   await app.register(cors, { origin: true });
   await app.register(multipart);
-  await app.register(authPlugin, { secret: process.env.JWT_SECRET ?? 'dev-secret-change-in-production' });
+  await app.register(authPlugin, { secret: config.jwtSecret });
 
   app.setErrorHandler(errorHandler);
 
-  await app.register(authRoutes);
-
-  const dbConfig = loadDbConfig();
-  const docConfig = loadDocumentConfig();
-  const searchConfig = loadSearchConfig();
+  const dbConfig: DBConfig | null = config.database ?? null;
+  const docConfig = loadDocumentConfig(config);
+  const searchConfig = loadSearchConfig(config);
   let db: ReturnType<typeof createConnection> | undefined;
   let service: ICandidateProfileService;
 
@@ -88,32 +86,39 @@ async function buildApp() {
     service = new CandidateProfileService();
   }
 
+  await app.register(async (instance) => authRoutes(instance, db));
+
   const searchSync = new SearchSyncService(searchConfig ?? undefined);
   await searchSync.initialize();
 
   await app.register(async (instance) => {
     instance.addHook('preHandler', instance.authenticate);
+    instance.addHook('preHandler', async (request, reply) => requireOwnedProfile(request, reply, service));
     await candidateRoutes(instance, service, searchSync);
   }, { prefix: '/api/v1/candidates' });
 
   await app.register(async (instance) => {
     instance.addHook('preHandler', instance.authenticate);
-    await generationRoutes(instance, service);
+    instance.addHook('preHandler', async (request, reply) => requireOwnedProfile(request, reply, service));
+    await generationRoutes(instance, service, config.azureOpenAI);
   }, { prefix: '/api/v1/candidates' });
 
   await app.register(async (instance) => {
     instance.addHook('preHandler', instance.authenticate);
+    instance.addHook('preHandler', async (request, reply) => requireOwnedProfile(request, reply, service));
     await renderingRoutes(instance, service);
   }, { prefix: '/api/v1/candidates' });
 
   await app.register(async (instance) => {
     instance.addHook('preHandler', instance.authenticate);
-    await documentRoutes(instance, service, docConfig);
+    instance.addHook('preHandler', async (request, reply) => requireOwnedProfile(request, reply, service));
+    await documentRoutes(instance, service, docConfig, db, searchSync);
   }, { prefix: '/api/v1/candidates' });
 
   await app.register(async (instance) => {
     instance.addHook('preHandler', instance.authenticate);
-    await coverLetterRoutes(instance, service);
+    instance.addHook('preHandler', async (request, reply) => requireOwnedProfile(request, reply, service));
+    await coverLetterRoutes(instance, service, config.azureOpenAI);
   }, { prefix: '/api/v1/candidates' });
 
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));

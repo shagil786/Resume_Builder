@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, pgEnum, real, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, pgEnum, real, boolean } from 'drizzle-orm/pg-core';
 import { candidateFacts } from './candidate-facts';
 
 export const extractionMethod = pgEnum('extraction_method', ['PDF_PARSER', 'DOCX_PARSER', 'OCR', 'USER_INPUT']);

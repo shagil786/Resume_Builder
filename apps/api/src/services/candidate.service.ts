@@ -1,11 +1,10 @@
-import type { CandidateProfile, CandidateFact, FactProvenance, PersonalInfo, WorkExperience, ProjectEntry, Skill, EducationEntry, Certification } from '@resume-builder/domain';
+import type { CandidateProfile, CandidateFact, FactProvenance, PersonalInfo, WorkExperience, Skill } from '@resume-builder/domain';
 import { AppError } from '@resume-builder/shared';
-import type { ICandidateProfileService } from './candidate.interface.js';
+import type { CertificationInput, EducationInput, ICandidateProfileService, ProjectInput, WorkExperienceInput } from './candidate.interface.js';
 
 export class CandidateProfileService implements ICandidateProfileService {
   private profiles = new Map<string, CandidateProfile>();
   private facts = new Map<string, CandidateFact>();
-  private provenances = new Map<string, FactProvenance>();
   private counter = 0;
 
   async createProfile(userId: string, personalInfo: PersonalInfo): Promise<{ profileId: string }> {
@@ -44,7 +43,7 @@ export class CandidateProfileService implements ICandidateProfileService {
     this.profiles.delete(profileId);
   }
 
-  async addExperience(profileId: string, data: Omit<WorkExperience, 'id' | 'bulletPoints' | 'profileId'>): Promise<{ experienceId: string }> {
+  async addExperience(profileId: string, data: WorkExperienceInput): Promise<{ experienceId: string }> {
     const profile = this.profiles.get(profileId);
     if (!profile) throw new AppError('CANDIDATE_PROFILE_NOT_FOUND', 'Profile not found');
     this.counter++;
@@ -61,7 +60,7 @@ export class CandidateProfileService implements ICandidateProfileService {
 
   async deleteExperience(_profileId: string, _experienceId: string): Promise<void> {}
 
-  async addProject(_profileId: string, _data: Omit<ProjectEntry, 'id' | 'bulletPoints' | 'profileId'>): Promise<{ projectId: string }> {
+  async addProject(_profileId: string, _data: ProjectInput): Promise<{ projectId: string }> {
     return { projectId: `proj-${++this.counter}` };
   }
 
@@ -69,11 +68,11 @@ export class CandidateProfileService implements ICandidateProfileService {
     return { skillId: `skill-${++this.counter}` };
   }
 
-  async addEducation(_profileId: string, _data: Omit<EducationEntry, 'id' | 'profileId'>): Promise<{ educationId: string }> {
+  async addEducation(_profileId: string, _data: EducationInput): Promise<{ educationId: string }> {
     return { educationId: `edu-${++this.counter}` };
   }
 
-  async addCertification(_profileId: string, _data: Omit<Certification, 'id' | 'profileId'>): Promise<{ certificationId: string }> {
+  async addCertification(_profileId: string, _data: CertificationInput): Promise<{ certificationId: string }> {
     return { certificationId: `cert-${++this.counter}` };
   }
 

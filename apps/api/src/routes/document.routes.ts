@@ -2,13 +2,17 @@ import type { FastifyInstance } from 'fastify';
 import type { ICandidateProfileService } from '../services/candidate.interface.js';
 import { DocumentService } from '../services/document.service.js';
 import type { DocumentServiceConfig } from '../services/document.service.js';
+import type { DB } from '@resume-builder/db';
+import type { SearchSyncService } from '../services/search-sync.service.js';
 
 export async function documentRoutes(
   app: FastifyInstance,
   profileService: ICandidateProfileService,
-  docConfig: DocumentServiceConfig
+  docConfig: DocumentServiceConfig,
+  db?: DB,
+  searchSync?: SearchSyncService
 ) {
-  const documentService = new DocumentService(docConfig);
+  const documentService = new DocumentService(docConfig, db, undefined, searchSync);
 
   app.post<{ Params: { profileId: string } }>(
     '/:profileId/documents',
@@ -24,7 +28,7 @@ export async function documentRoutes(
         request.params.profileId,
         file.filename,
         file.mimetype,
-        buffer.buffer
+        buffer.buffer as ArrayBuffer
       );
 
       reply.status(201).send({
@@ -39,7 +43,12 @@ export async function documentRoutes(
   app.get<{ Params: { profileId: string; documentId: string } }>(
     '/:profileId/documents/:documentId',
     async (request, reply) => {
-      reply.status(501).send({ error: 'Document retrieval requires database' });
+      const document = await documentService.getDocument(request.params.profileId, request.params.documentId);
+      if (!document) {
+        reply.status(404).send({ error: 'Document not found' });
+        return;
+      }
+      return document;
     }
   );
 }

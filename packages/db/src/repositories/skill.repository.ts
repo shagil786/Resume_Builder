@@ -1,4 +1,4 @@
-import { eq, and, like, count } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import type { DB, TX } from './types';
 import { skills } from '../schema';
 import type { Skill } from '@resume-builder/domain';

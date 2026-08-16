@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, pgEnum, bigint, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, pgEnum, bigint } from 'drizzle-orm/pg-core';
 import { candidateProfiles } from './candidate-profiles';
 
 export const documentStatus = pgEnum('document_status', ['PENDING_PROCESSING', 'PROCESSED', 'FAILED']);

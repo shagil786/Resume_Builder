@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { api } from '../../lib/api';
 
 export default function ProfilePage() {
   const [profileId, setProfileId] = useState('');
@@ -8,15 +9,9 @@ export default function ProfilePage() {
 
   const createProfile = async () => {
     setLoading(true);
-    const userId = `user-${Date.now()}`;
-    const res = await fetch('/api/v1/candidates', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, personalInfo: { firstName: '', lastName: '', piiFields: [] } }),
-    });
-    const data = await res.json();
-    setProfileId(data.profileId);
-    setStatus(`Created: ${data.profileId}`);
+    const res = await api.candidates.create({ personalInfo: { firstName: '', lastName: '', piiFields: [] } });
+    if (res.error || !res.data) setStatus(res.error ?? 'Unable to create profile');
+    else { window.localStorage.setItem('resume_builder_profile_id', res.data.profileId); setProfileId(res.data.profileId); setStatus(`Created: ${res.data.profileId}`); }
     setLoading(false);
   };
 

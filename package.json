@@ -12,7 +12,8 @@
     "packages/storage",
     "packages/document-intelligence",
     "packages/shared",
-    "packages/evaluation"
+    "packages/evaluation",
+    "packages/config"
   ],
   "scripts": {
     "dev": "turbo run dev",

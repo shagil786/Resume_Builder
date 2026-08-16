@@ -1,16 +1,24 @@
 'use client';
 import { useState } from 'react';
+import { api } from '../../lib/api';
 
 export default function JobPage() {
   const [url, setUrl] = useState('');
   const [text, setText] = useState('');
+  const [company, setCompany] = useState('');
+  const [title, setTitle] = useState('');
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     setGenerating(true);
-    setResult('Generation requires a profile ID and configured AI. Use the API directly for now.');
+    const profileId = window.localStorage.getItem('resume_builder_profile_id');
+    if (!profileId) setResult('Create a profile first.');
+    else {
+      const response = await api.candidates.generate(profileId, { jobDescription: text, company, title });
+      setResult(response.error ?? 'Resume generated. Open Preview to review it.');
+    }
     setGenerating(false);
   };
 
@@ -20,6 +28,14 @@ export default function JobPage() {
       <p className="mt-1 text-sm text-slate-500">Analyze a job posting and generate a tailored resume</p>
 
       <form onSubmit={handleGenerate} className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-white p-6">
+        <div>
+          <label className="block text-sm font-medium text-slate-700">Company</label>
+          <input required value={company} onChange={e => setCompany(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700">Target title</label>
+          <input required value={title} onChange={e => setTitle(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        </div>
         <div>
           <label className="block text-sm font-medium text-slate-700">Job Posting URL</label>
           <input value={url} onChange={e => setUrl(e.target.value)}
@@ -43,7 +59,7 @@ export default function JobPage() {
             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none resize-y" />
         </div>
 
-        <button type="submit" disabled={generating || (!url && !text)}
+        <button type="submit" disabled={generating || !text || !company || !title}
           className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50 transition-opacity">
           {generating ? 'Generating...' : 'Generate Resume'}
         </button>

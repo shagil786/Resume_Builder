@@ -1,4 +1,4 @@
-import { eq, and, like, lte, count } from 'drizzle-orm';
+import { eq, and, lte } from 'drizzle-orm';
 import type { DB, TX } from './types';
 import { certifications } from '../schema';
 import type { Certification } from '@resume-builder/domain';

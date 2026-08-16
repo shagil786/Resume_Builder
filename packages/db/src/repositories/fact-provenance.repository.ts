@@ -1,9 +1,7 @@
-import { eq, like, and, count } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import type { DB, TX } from './types';
-import { paginatedResult, paginate } from './utils';
-import type { PaginationParams, PaginatedResult } from './utils';
-import { candidateFacts, factProvenance } from '../schema';
-import type { CandidateFact, FactProvenance } from '@resume-builder/domain';
+import { factProvenance } from '../schema';
+import type { FactProvenance } from '@resume-builder/domain';
 
 export interface IFactProvenanceRepository {
   findByFactId(factId: string): Promise<FactProvenance | null>;

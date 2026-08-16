@@ -1,4 +1,4 @@
-import type { CandidateProfile, CandidateFact, JobAnalysis, ResumeTemplate, ResumeStrategy, ResumeContent } from '@resume-builder/domain';
+import type { CandidateProfile, CandidateFact, JobAnalysis, ResumeContent } from '@resume-builder/domain';
 
 export interface AITool<TInput, TOutput> {
   name: string;

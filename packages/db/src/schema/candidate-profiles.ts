@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, pgEnum, integer, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, pgEnum, jsonb } from 'drizzle-orm/pg-core';
 import { users } from './users';
 
 export const profileStatus = pgEnum('profile_status', ['DRAFT', 'FINALIZED']);

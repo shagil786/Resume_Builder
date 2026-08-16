@@ -2,8 +2,9 @@ import type { FastifyInstance } from 'fastify';
 import type { ICandidateProfileService } from '../services/candidate.interface.js';
 import { createLLMClient, createAzureOpenAIClient, JobAnalyzer, CoverLetterWriter } from '@resume-builder/ai';
 import { CoverLetterRenderEngine } from '../services/cover-letter-renderer.js';
+import type { ApplicationConfig } from '@resume-builder/config';
 
-export async function coverLetterRoutes(app: FastifyInstance, profileService: ICandidateProfileService) {
+export async function coverLetterRoutes(app: FastifyInstance, profileService: ICandidateProfileService, azureOpenAI?: ApplicationConfig['azureOpenAI']) {
   const renderer = new CoverLetterRenderEngine();
 
   app.post<{
@@ -16,11 +17,11 @@ export async function coverLetterRoutes(app: FastifyInstance, profileService: IC
       if (!profile) { reply.status(404).send({ error: 'Profile not found' }); return; }
 
       let llm;
-      if (process.env.AZURE_OPENAI_ENDPOINT && process.env.AZURE_OPENAI_KEY) {
+      if (azureOpenAI?.endpoint) {
         llm = createAzureOpenAIClient({
-          endpoint: process.env.AZURE_OPENAI_ENDPOINT,
-          apiKey: process.env.AZURE_OPENAI_KEY,
-          deployment: process.env.AZURE_OPENAI_DEPLOYMENT ?? 'gpt-4o',
+          endpoint: azureOpenAI.endpoint,
+          apiKey: azureOpenAI.apiKey,
+          deployment: azureOpenAI.deployment ?? 'gpt-4o',
         });
       } else {
         llm = createLLMClient({ model: 'gpt-4o-mini', temperature: 0.3 });

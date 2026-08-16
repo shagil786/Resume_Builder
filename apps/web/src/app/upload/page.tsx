@@ -1,5 +1,6 @@
 'use client';
 import { useState, useRef } from 'react';
+import { api } from '../../lib/api';
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -10,7 +11,12 @@ export default function UploadPage() {
   const handleUpload = async () => {
     if (!file) return;
     setUploading(true);
-    setResult('Upload endpoint configured — needs Azure Document Intelligence + Blob Storage to process.');
+    const profileId = window.localStorage.getItem('resume_builder_profile_id');
+    if (!profileId) setResult('Create a profile first.');
+    else {
+      const response = await api.candidates.upload(profileId, file);
+      setResult(response.error ?? `Uploaded. Extracted ${response.data?.factCount ?? 0} facts.`);
+    }
     setUploading(false);
   };
 

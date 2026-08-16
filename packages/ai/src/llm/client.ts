@@ -35,22 +35,46 @@ export function createLLMClient(config: LLMClientConfig, logger?: Logger): LLMCl
       log.info('LLM completion requested', { model, messages: messages.length, temperature, maxTokens });
 
       const promptTokens = messages.reduce((sum, m) => sum + m.content.length, 0);
-      const systemMsg = messages.find(m => m.role === 'system')?.content ?? '';
+      const systemMsg = (messages.find(m => m.role === 'system')?.content ?? '');
       const userMsg = messages.find(m => m.role === 'user')?.content ?? '';
+      const combined = (systemMsg + ' ' + userMsg).toLowerCase();
+      const logPrefix = combined.slice(0, 100).replace(/\n/g, ' ');
+      console.error('[MOCK LLM] matching:', JSON.stringify(logPrefix));
 
       let content = '';
-      if (systemMsg.includes('cover letter') || userMsg.includes('cover letter')) {
+
+      if (combined.includes('cover letter')) {
         content = JSON.stringify({
           subject: `Application for ${extractRole(userMsg)}`,
           salutation: 'Dear Hiring Manager,',
           body: [
-            `I am writing to express my strong interest in the ${extractRole(userMsg)} position at ${extractCompany(userMsg)}. With my background and skills, I believe I would be a valuable addition to your team.`,
-            `Throughout my career, I have developed expertise that aligns well with the requirements of this role. My experience includes working with modern technologies and delivering impactful results.`,
-            `I am particularly excited about the opportunity to contribute to ${extractCompany(userMsg)}'s success. I am confident that my skills and enthusiasm make me a strong candidate for this position.`,
+            `I am writing to express my strong interest in the ${extractRole(userMsg)} position at ${extractCompany(userMsg)}.`,
+            `Throughout my career, I have developed expertise that aligns well with the requirements of this role.`,
+            `I am confident that my skills and enthusiasm make me a strong candidate for this position.`,
           ],
           closing: 'Sincerely,\nCandidate',
         });
-      } else if (systemMsg.includes('job description') || systemMsg.includes('job posting')) {
+      } else if (combined.includes('resume strategist') || combined.includes('create a strategy')) {
+        content = JSON.stringify({
+          targetRole: extractRole(userMsg) || 'Software Engineer',
+          emphasize: ['React', 'TypeScript', 'Frontend'],
+          deemphasize: [],
+          experiencePriority: [],
+          selectedFacts: [],
+          sectionBudget: { summary: 50, experience: 400, projects: 100, skills: 80 },
+        });
+      } else if (combined.includes('professional resume writer') || combined.includes('generate resume content')) {
+        content = JSON.stringify({
+          headline: extractRole(userMsg) || 'Software Engineer',
+          summary: 'Experienced engineer with a track record of delivering results.',
+          skills: { Technical: ['React', 'TypeScript'] },
+          experience: [{
+            company: extractCompany(userMsg) || 'Company',
+            role: extractRole(userMsg) || 'Engineer',
+            bullets: [{ text: 'Built scalable applications.', evidence: ['mock-1'] }],
+          }],
+        });
+      } else if (combined.includes('job description analyzer') || combined.includes('extract structured information')) {
         content = JSON.stringify({
           role: extractRole(userMsg) || 'Software Engineer',
           company: extractCompany(userMsg) || 'Company',
@@ -63,6 +87,13 @@ export function createLLMClient(config: LLMClientConfig, logger?: Logger): LLMCl
           leadershipExpectations: [],
           educationRequirements: [],
           experienceRequirements: {},
+        });
+      } else if (combined.includes('fact-checking') || combined.includes('check each claim')) {
+        content = JSON.stringify({ valid: true, issues: [] });
+      } else if (combined.includes('match evaluator') || combined.includes('evaluate the match')) {
+        content = JSON.stringify({
+          technical_skills: 85, responsibilities: 80, seniority: 90,
+          domain_knowledge: 75, keyword_coverage: 88, education: 100, overall_match: 86,
         });
       }
 

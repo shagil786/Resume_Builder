@@ -1,5 +1,5 @@
 {
-  "name": "@resume-builder/search",
+  "name": "@resume-builder/config",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
@@ -9,8 +9,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@resume-builder/domain": "*",
-    "@resume-builder/shared": "*"
+    "@azure/identity": "^4.13.0",
+    "@azure/keyvault-secrets": "^4.10.0"
   },
   "devDependencies": {
     "vitest": "^4.1.10"

@@ -122,6 +122,7 @@ export function createBlobStorageClient(config: StorageClientConfig, logger?: Lo
       const blobs = parseBlobListXml(xml);
       return blobs.map(b => ({
         ...b,
+        container,
         url: `${baseUrl}/${container}/${encodeURIComponent(b.name)}`,
       }));
     },

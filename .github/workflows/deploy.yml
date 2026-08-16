@@ -54,18 +54,15 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --image ${{ env.API_IMAGE }} \
             --set-env-vars \
-              DATABASE_HOST=${{ secrets.DATABASE_HOST }} \
-              DATABASE_PORT=${{ secrets.DATABASE_PORT }} \
-              DATABASE_NAME=${{ secrets.DATABASE_NAME }} \
-              DATABASE_USER=${{ secrets.DATABASE_USER }} \
-              DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
-              JWT_SECRET=${{ secrets.JWT_SECRET }} \
-              AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} \
-              AZURE_OPENAI_KEY=${{ secrets.AZURE_OPENAI_KEY }} \
-              AZURE_OPENAI_DEPLOYMENT=${{ secrets.AZURE_OPENAI_DEPLOYMENT }} \
-              BLOB_ACCOUNT_NAME=${{ secrets.BLOB_ACCOUNT_NAME }} \
-              BLOB_ACCOUNT_KEY=${{ secrets.BLOB_ACCOUNT_KEY }} \
-              DOC_INTELLIGENCE_ENDPOINT=${{ secrets.DOC_INTELLIGENCE_ENDPOINT }} \
-              DOC_INTELLIGENCE_KEY=${{ secrets.DOC_INTELLIGENCE_KEY }} \
-              SEARCH_ENDPOINT=${{ secrets.SEARCH_ENDPOINT }} \
-              SEARCH_KEY=${{ secrets.SEARCH_KEY }}
+              KEY_VAULT_URL=${{ vars.KEY_VAULT_URL }} \
+              DATABASE_HOST=${{ vars.DATABASE_HOST }} \
+              DATABASE_PORT=${{ vars.DATABASE_PORT }} \
+              DATABASE_NAME=${{ vars.DATABASE_NAME }} \
+              DATABASE_SSL=true \
+              AZURE_OPENAI_ENDPOINT=${{ vars.AZURE_OPENAI_ENDPOINT }} \
+              AZURE_OPENAI_DEPLOYMENT=${{ vars.AZURE_OPENAI_DEPLOYMENT }} \
+              BLOB_ACCOUNT_NAME=${{ vars.BLOB_ACCOUNT_NAME }} \
+              BLOB_CONTAINER=${{ vars.BLOB_CONTAINER }} \
+              DOC_INTELLIGENCE_ENDPOINT=${{ vars.DOC_INTELLIGENCE_ENDPOINT }} \
+              SEARCH_ENDPOINT=${{ vars.SEARCH_ENDPOINT }} \
+              SEARCH_INDEX=${{ vars.SEARCH_INDEX }}

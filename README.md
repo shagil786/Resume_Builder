@@ -92,6 +92,9 @@ Deterministic Template Renderer → Layout Validation → PDF/DOCX
 # Install dependencies
 npm install
 
+# Authenticate for local Key Vault access
+az login
+
 # Run typecheck across all packages
 npm run typecheck
 
@@ -102,6 +105,24 @@ npm run dev -w apps/api
 # Test it:
 curl http://localhost:3001/health
 ```
+
+### Azure Key Vault configuration
+
+The API loads all application secrets at startup through `DefaultAzureCredential` and `SecretClient`. Local development uses the Azure CLI identity from `az login`; Azure-hosted deployments use the App Service/Container Apps managed identity. Secret values must never be placed in `.env`, `.env.example`, source code, or deployment logs.
+
+Set `KEY_VAULT_URL` and the non-secret settings listed in `.env.example`. The following Key Vault secret names are required:
+
+| Key Vault secret | Application setting |
+|---|---|
+| `postgres-admin-password` | `DATABASE_PASSWORD` |
+| `postgres-admin-username` | `DATABASE_USER` |
+| `azure-openai-key` | `AZURE_OPENAI_KEY` |
+| `blob-account-key` | `BLOB_ACCOUNT_KEY` |
+| `document-intelligence-key` | `DOC_INTELLIGENCE_KEY` |
+| `search-admin-key` | `SEARCH_KEY` |
+| `jwt-secret` | `JWT_SECRET` |
+
+Grant the local developer or managed identity the `Key Vault Secrets User` role on the vault. The identity that creates or rotates secrets needs `Key Vault Secrets Officer`; runtime identities should not receive write access. In App Service, the same settings can alternatively be supplied as Key Vault references using the form `@Microsoft.KeyVault(SecretUri=https://<vault>.vault.azure.net/secrets/<secret-name>)`. The application still validates required secrets and fails clearly at startup when production configuration is incomplete.
 
 ### Database Setup (optional — for persisted data)
 

@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, pgEnum, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, pgEnum } from 'drizzle-orm/pg-core';
 import { users } from './users';
 
 export const jobSource = pgEnum('job_source', ['TEXT_INPUT', 'JOB_URL', 'API_IMPORT']);

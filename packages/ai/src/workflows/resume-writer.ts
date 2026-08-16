@@ -16,7 +16,7 @@ export class ResumeWriter {
     this.logger = logger ?? new ConsoleLogger('resume-writer');
   }
 
-  async write(profile: CandidateProfile, strategy: ResumeStrategy, facts: CandidateFact[]): Promise<ResumeContent> {
+  async write(_profile: CandidateProfile, strategy: ResumeStrategy, facts: CandidateFact[], language?: string): Promise<ResumeContent> {
     const systemPrompt = getPrompt('resume-writer-system');
     if (!systemPrompt) throw new Error('resume-writer-system prompt not registered');
 
@@ -30,6 +30,7 @@ export class ResumeWriter {
       {
         role: 'user',
         content: `Target Role: ${strategy.targetRole}
+Language: ${language ?? 'English'}
 
 Strategy:
 - Emphasize: ${strategy.emphasize.join(', ')}

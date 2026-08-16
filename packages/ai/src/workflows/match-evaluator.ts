@@ -26,7 +26,7 @@ export class MatchEvaluator {
     this.logger = logger ?? new ConsoleLogger('match-evaluator');
   }
 
-  async evaluate(profile: CandidateProfile, resume: ResumeContent, jobAnalysis: JobAnalysis): Promise<MatchEvaluation> {
+  async evaluate(_profile: CandidateProfile, resume: ResumeContent, jobAnalysis: JobAnalysis): Promise<MatchEvaluation> {
     const systemPrompt = getPrompt('match-evaluator-system');
     if (!systemPrompt) throw new Error('match-evaluator-system prompt not registered');
 

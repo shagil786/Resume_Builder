@@ -2,7 +2,7 @@ import type { LLMClient, LLMMessage, LLMClientConfig } from '../llm';
 import type { Logger } from '@resume-builder/shared';
 import { ConsoleLogger } from '@resume-builder/shared';
 import type { Job, JobAnalysis } from '@resume-builder/domain';
-import { getPrompt, buildPrompt } from '../prompts';
+import { getPrompt } from '../prompts';
 import type { JobAnalysisSchema } from '../schemas';
 
 export interface JobAnalyzerConfig extends LLMClientConfig {

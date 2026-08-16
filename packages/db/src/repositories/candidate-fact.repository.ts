@@ -1,6 +1,6 @@
-import { eq, and, like, sql, count } from 'drizzle-orm';
+import { eq, and, like, sql, count, inArray, gte } from 'drizzle-orm';
 import type { DB, TX } from './types';
-import { paginatedResult, paginate, repoError } from './utils';
+import { paginatedResult, paginate } from './utils';
 import type { PaginationParams, PaginatedResult } from './utils';
 import type { IFactSearchFilters } from './candidate-profile.repository';
 import { candidateFacts } from '../schema';
@@ -11,13 +11,15 @@ export interface ICandidateFactRepository {
   findByProfileId(profileId: string, filters?: IFactSearchFilters, pagination?: PaginationParams): Promise<PaginatedResult<CandidateFact>>;
   findByStatus(profileId: string, status: string): Promise<CandidateFact[]>;
   searchByText(profileId: string, query: string, filters?: IFactSearchFilters): Promise<PaginatedResult<CandidateFact>>;
-  create(data: Omit<CandidateFact, 'id' | 'timestamp' | 'version'>): Promise<CandidateFact>;
-  createMany(data: Omit<CandidateFact, 'id' | 'timestamp' | 'version'>[]): Promise<CandidateFact[]>;
+  create(data: CandidateFactCreate): Promise<CandidateFact>;
+  createMany(data: CandidateFactCreate[]): Promise<CandidateFact[]>;
   update(id: string, data: Partial<CandidateFact>): Promise<CandidateFact | null>;
   updateStatus(id: string, status: string, notes?: string): Promise<CandidateFact | null>;
   delete(id: string): Promise<boolean>;
   deleteByProfileId(profileId: string): Promise<number>;
 }
+
+export type CandidateFactCreate = Omit<CandidateFact, 'id' | 'timestamp' | 'version'> & { profileId: string };
 
 export function createCandidateFactRepository(db: DB | TX): ICandidateFactRepository {
   return {
