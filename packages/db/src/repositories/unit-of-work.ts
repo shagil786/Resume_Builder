@@ -8,6 +8,7 @@ import { createEducationRepository, type IEducationRepository } from './educatio
 import { createCertificationRepository, type ICertificationRepository } from './certification.repository';
 import { createSourceDocumentRepository, type ISourceDocumentRepository } from './source-document.repository';
 import { createFactProvenanceRepository, type IFactProvenanceRepository } from './fact-provenance.repository';
+import { createGenerationRunRepository, type IGenerationRunRepository } from './generation-run.repository';
 
 export interface IUnitOfWork {
   candidateProfiles: ICandidateProfileRepository;
@@ -19,6 +20,7 @@ export interface IUnitOfWork {
   certifications: ICertificationRepository;
   sourceDocuments: ISourceDocumentRepository;
   factProvenance: IFactProvenanceRepository;
+  generationRuns: IGenerationRunRepository;
 
   commit(): Promise<void>;
   rollback(): Promise<void>;
@@ -35,6 +37,7 @@ export function createUnitOfWork(db: DB | TX): IUnitOfWork {
     certifications: createCertificationRepository(db),
     sourceDocuments: createSourceDocumentRepository(db),
     factProvenance: createFactProvenanceRepository(db),
+    generationRuns: createGenerationRunRepository(db),
 
     async commit() {},
     async rollback() {},

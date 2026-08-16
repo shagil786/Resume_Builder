@@ -3,9 +3,10 @@ import type { ICandidateProfileService } from '../services/candidate.interface.j
 import { GenerationService } from '../services/generation.service.js';
 import type { CandidateFact } from '@resume-builder/domain';
 import type { ApplicationConfig } from '@resume-builder/config';
+import type { DB } from '@resume-builder/db';
 
-export async function generationRoutes(app: FastifyInstance, profileService: ICandidateProfileService, azureOpenAI?: ApplicationConfig['azureOpenAI']) {
-  const generationService = new GenerationService(azureOpenAI);
+export async function generationRoutes(app: FastifyInstance, profileService: ICandidateProfileService, azureOpenAI?: ApplicationConfig['azureOpenAI'], db?: DB) {
+  const generationService = new GenerationService(azureOpenAI, db);
 
   app.post<{
     Params: { profileId: string };
@@ -35,7 +36,7 @@ export async function generationRoutes(app: FastifyInstance, profileService: ICa
 
   app.get<{ Params: { profileId: string; runId: string } }>('/:profileId/generations/:runId/status',
     async (request, reply) => {
-      const run = generationService.getRun(request.params.runId);
+      const run = await generationService.getRun(request.params.runId);
       if (!run || run.profileId !== request.params.profileId) {
         reply.status(404).send({ error: 'Generation run not found' });
         return;

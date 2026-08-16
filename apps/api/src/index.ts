@@ -100,7 +100,7 @@ async function buildApp() {
   await app.register(async (instance) => {
     instance.addHook('preHandler', instance.authenticate);
     instance.addHook('preHandler', async (request, reply) => requireOwnedProfile(request, reply, service));
-    await generationRoutes(instance, service, config.azureOpenAI);
+    await generationRoutes(instance, service, config.azureOpenAI, db);
   }, { prefix: '/api/v1/candidates' });
 
   await app.register(async (instance) => {
