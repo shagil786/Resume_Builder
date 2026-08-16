@@ -1,0 +1,15 @@
+{
+  "name": "@resume-builder/rendering",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@resume-builder/domain": "*",
+    "@resume-builder/shared": "*",
+    "playwright": "^1.62.1"
+  }
+}

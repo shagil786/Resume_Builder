@@ -1,5 +1,6 @@
 export { createConnection } from './connection';
 export type { DBConfig, DB, TX } from './connection';
+export { runMigrations } from './migrate';
 export * from './schema';
 
 export { createUnitOfWork } from './repositories/unit-of-work';

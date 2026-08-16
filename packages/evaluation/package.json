@@ -1,0 +1,18 @@
+{
+  "name": "@resume-builder/evaluation",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "evaluate": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@resume-builder/domain": "*",
+    "@resume-builder/shared": "*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.3"
+  }
+}

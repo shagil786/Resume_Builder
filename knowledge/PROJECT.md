@@ -30,11 +30,11 @@ AI-powered resume builder that ingests candidate documents (PDF/DOCX), extracts 
 | apps/api | Not created | Fastify backend |
 | packages/domain | ✅ Exists | Domain types & interfaces, package.json with @resume-builder/domain |
 | packages/db | ✅ Exists | Drizzle ORM schemas + repository implementations |
-| packages/ai | Not created | AI workflow orchestration |
-| packages/rendering | Not created | Resume rendering engine |
-| packages/search | Not created | Azure AI Search client |
-| packages/storage | Not created | Azure Blob Storage client |
-| packages/document-intelligence | Not created | Document parsing client |
+| packages/ai | ✅ Exists | AI workflow orchestration with LLM client, prompts, stage definitions |
+| packages/rendering | ✅ Exists | HTML/PDF template engine with overflow control |
+| packages/search | ✅ Exists | Azure AI Search client + evidence retrieval |
+| packages/storage | ✅ Exists | Azure Blob Storage client + SAS URLs |
+| packages/document-intelligence | ✅ Exists | Azure Document Intelligence client + resume parsesr |
 | packages/shared | Not created | Cross-cutting utilities |
 
 ## Key Constraints

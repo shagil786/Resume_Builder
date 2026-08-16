@@ -1,124 +1,102 @@
-import type { CandidateProfile, CandidateFact, FactProvenance } from '@resume-builder/domain';
+import type { CandidateProfile, CandidateFact, FactProvenance, PersonalInfo, WorkExperience, ProjectEntry, Skill, EducationEntry, Certification } from '@resume-builder/domain';
+import type { ICandidateProfileService } from './candidate.interface';
 
-export interface CreateProfileResult {
-  profileId: string;
-}
+export class CandidateProfileService implements ICandidateProfileService {
+  private profiles = new Map<string, CandidateProfile>();
+  private facts = new Map<string, CandidateFact>();
+  private provenances = new Map<string, FactProvenance>();
+  private counter = 0;
 
-export interface AddEntityResult {
-  experienceId?: string;
-  projectId?: string;
-  skillId?: string;
-  educationId?: string;
-  certificationId?: string;
-}
+  async createProfile(userId: string, personalInfo: PersonalInfo): Promise<{ profileId: string }> {
+    this.counter++;
+    const id = `profile-${this.counter}`;
+    const now = new Date();
+    this.profiles.set(id, {
+      id,
+      userId,
+      personalInfo,
+      visibility: 'PRIVATE',
+      status: 'DRAFT',
+      workExperience: [],
+      projects: [],
+      skills: [],
+      education: [],
+      certifications: [],
+      sourceDocuments: [],
+      createdAt: now,
+      updatedAt: now,
+    });
+    return { profileId: id };
+  }
 
-export const CANDIDATE_SERVICE_ERRORS = {
-  PROFILE_NOT_FOUND: 'CANDIDATE_PROFILE_NOT_FOUND',
-  FACT_NOT_FOUND: 'CANDIDATE_FACT_NOT_FOUND',
-  VALIDATION_ERROR: 'CANDIDATE_VALIDATION_ERROR',
-} as const;
+  async getProfile(profileId: string): Promise<CandidateProfile | null> {
+    return this.profiles.get(profileId) ?? null;
+  }
 
-export class CandidateServiceError extends Error {
-  public readonly code: string;
-  constructor(code: string, message: string) {
-    super(message);
-    this.name = 'CandidateServiceError';
-    this.code = code;
+  async updateProfile(profileId: string, data: Partial<CandidateProfile>): Promise<void> {
+    const profile = this.profiles.get(profileId);
+    if (!profile) throw new AppError('CANDIDATE_PROFILE_NOT_FOUND', 'Profile not found');
+    this.profiles.set(profileId, { ...profile, ...data, updatedAt: new Date() });
+  }
+
+  async deleteProfile(profileId: string): Promise<void> {
+    this.profiles.delete(profileId);
+  }
+
+  async addExperience(profileId: string, data: Omit<WorkExperience, 'id' | 'bulletPoints' | 'profileId'>): Promise<{ experienceId: string }> {
+    const profile = this.profiles.get(profileId);
+    if (!profile) throw new AppError('CANDIDATE_PROFILE_NOT_FOUND', 'Profile not found');
+    this.counter++;
+    const factId = `fact-${this.counter}`;
+    this.facts.set(factId, {
+      id: factId, sourceRef: 'user_input', claim: `Worked at ${data.company} as ${data.title}`,
+      context: '', confidence: 1.0, status: 'USER_PROVIDED', category: 'WORK',
+      timestamp: new Date(), version: 1,
+    });
+    return { experienceId: `exp-${this.counter}` };
+  }
+
+  async updateExperience(_profileId: string, _experienceId: string, _data: Partial<WorkExperience>): Promise<void> {}
+
+  async deleteExperience(_profileId: string, _experienceId: string): Promise<void> {}
+
+  async addProject(_profileId: string, _data: Omit<ProjectEntry, 'id' | 'bulletPoints' | 'profileId'>): Promise<{ projectId: string }> {
+    return { projectId: `proj-${++this.counter}` };
+  }
+
+  async addSkill(_profileId: string, _data: Omit<Skill, 'id' | 'profileId'>): Promise<{ skillId: string }> {
+    return { skillId: `skill-${++this.counter}` };
+  }
+
+  async addEducation(_profileId: string, _data: Omit<EducationEntry, 'id' | 'profileId'>): Promise<{ educationId: string }> {
+    return { educationId: `edu-${++this.counter}` };
+  }
+
+  async addCertification(_profileId: string, _data: Omit<Certification, 'id' | 'profileId'>): Promise<{ certificationId: string }> {
+    return { certificationId: `cert-${++this.counter}` };
+  }
+
+  async searchFacts(_profileId: string, _query: string): Promise<{ facts: CandidateFact[]; total: number }> {
+    const allFacts = Array.from(this.facts.values());
+    return { facts: allFacts, total: allFacts.length };
+  }
+
+  async updateFactStatus(factId: string, status: string, notes?: string): Promise<void> {
+    const fact = this.facts.get(factId);
+    if (!fact) throw new AppError('CANDIDATE_FACT_NOT_FOUND', 'Fact not found');
+    this.facts.set(factId, { ...fact, status: status as CandidateFact['status'], verificationNotes: notes });
+  }
+
+  async getFactProvenance(_factId: string): Promise<FactProvenance | null> {
+    return null;
   }
 }
 
-export function createCandidateProfileService() {
-  const profiles = new Map<string, CandidateProfile>();
-  const facts = new Map<string, CandidateFact>();
-  const provenances = new Map<string, FactProvenance>();
-  let profileCounter = 0;
-  let factCounter = 0;
-
-  return {
-    async createProfile(userId: string, personalInfo: Record<string, unknown>): Promise<CreateProfileResult> {
-      profileCounter++;
-      const id = `profile-${profileCounter}`;
-      const now = new Date();
-      profiles.set(id, {
-        id,
-        userId,
-        personalInfo: personalInfo as CandidateProfile['personalInfo'],
-        visibility: 'PRIVATE',
-        status: 'DRAFT',
-        workExperience: [],
-        projects: [],
-        skills: [],
-        education: [],
-        certifications: [],
-        sourceDocuments: [],
-        createdAt: now,
-        updatedAt: now,
-      });
-      return { profileId: id };
-    },
-
-    async getProfile(profileId: string): Promise<CandidateProfile | null> {
-      return profiles.get(profileId) ?? null;
-    },
-
-    async updateProfile(profileId: string, data: Record<string, unknown>): Promise<void> {
-      const profile = profiles.get(profileId);
-      if (!profile) throw new CandidateServiceError(CANDIDATE_SERVICE_ERRORS.PROFILE_NOT_FOUND, 'Profile not found');
-      profiles.set(profileId, { ...profile, ...data, updatedAt: new Date() });
-    },
-
-    async deleteProfile(profileId: string): Promise<void> {
-      profiles.delete(profileId);
-    },
-
-    async addExperience(profileId: string, data: { company: string; title: string; startDate: string }): Promise<AddEntityResult> {
-      const profile = profiles.get(profileId);
-      if (!profile) throw new CandidateServiceError(CANDIDATE_SERVICE_ERRORS.PROFILE_NOT_FOUND, 'Profile not found');
-      const factCounterLocal = ++factCounter;
-      const factId = `fact-${factCounterLocal}`;
-      facts.set(factId, {
-        id: factId,
-        sourceRef: 'user_input',
-        claim: `Worked at ${data.company} as ${data.title}`,
-        context: '',
-        confidence: 1.0,
-        status: 'USER_PROVIDED',
-        category: 'WORK',
-        timestamp: new Date(),
-        version: 1,
-      });
-      return { experienceId: `exp-${factCounterLocal}` };
-    },
-
-    async addProject(profileId: string, data: { name: string; description: string }): Promise<AddEntityResult> {
-      return { projectId: `proj-${++factCounter}` };
-    },
-
-    async addSkill(profileId: string, data: { name: string; category: string }): Promise<AddEntityResult> {
-      return { skillId: `skill-${++factCounter}` };
-    },
-
-    async addEducation(profileId: string, _data: { institution: string; degree: string; fieldOfStudy: string }): Promise<AddEntityResult> {
-      return { educationId: `edu-${++factCounter}` };
-    },
-
-    async addCertification(profileId: string, _data: { name: string; issuingOrganization: string }): Promise<AddEntityResult> {
-      return { certificationId: `cert-${++factCounter}` };
-    },
-
-    async searchFacts(profileId: string, query: string): Promise<{ facts: CandidateFact[]; total: number }> {
-      const allFacts = Array.from(facts.values());
-      return { facts: allFacts, total: allFacts.length };
-    },
-
-    async updateFactStatus(factId: string, status: string, verificationNotes?: string): Promise<void> {
-      const fact = facts.get(factId);
-      if (!fact) throw new CandidateServiceError(CANDIDATE_SERVICE_ERRORS.FACT_NOT_FOUND, 'Fact not found');
-      facts.set(factId, { ...fact, status: status as CandidateFact['status'], verificationNotes });
-    },
-
-    async getFactProvenance(factId: string): Promise<FactProvenance | null> {
-      return provenances.get(factId) ?? null;
-    },
-  };
+class AppError extends Error {
+  public readonly code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = 'AppError';
+    this.code = code;
+  }
 }

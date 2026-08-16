@@ -83,7 +83,7 @@ Deterministic Template Renderer → Layout Validation → PDF/DOCX
 ## Prerequisites
 
 - **Node.js** >= 20
-- **PostgreSQL** 15+ (for running with a database)
+- **Docker** (for PostgreSQL — optional, falls back to in-memory)
 - **npm** >= 10
 
 ## Getting Started
@@ -103,21 +103,17 @@ npm run dev -w apps/api
 curl http://localhost:3001/health
 ```
 
-### Database Setup (optional — needed for persisted data)
+### Database Setup (optional — for persisted data)
 
 ```bash
-# Set up PostgreSQL connection (default: localhost:5432)
-export DATABASE_HOST=localhost
-export DATABASE_PORT=5432
-export DATABASE_NAME=resume_builder
-export DATABASE_USER=postgres
-export DATABASE_PASSWORD=postgres
+# Start PostgreSQL via Docker
+docker compose up -d
 
-# Run migrations
-npm run migrate -w packages/db
+# Start the API (auto-detects DATABASE_HOST and uses DB)
+npm run dev -w apps/api
 
-# Or generate a fresh migration after schema changes
-npm run generate -w packages/db
+# The server will auto-run migrations on startup.
+# Data persists in the Docker volume across restarts.
 ```
 
 ## API Endpoints
