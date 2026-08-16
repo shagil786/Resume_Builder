@@ -1,7 +1,7 @@
 import type { LLMClient, LLMMessage, LLMClientConfig } from '../llm';
 import type { Logger } from '@resume-builder/shared';
 import { ConsoleLogger } from '@resume-builder/shared';
-import type { CandidateProfile, JobAnalysis, ResumeStrategy } from '@resume-builder/domain';
+import type { CandidateProfile, CandidateFact, JobAnalysis, ResumeStrategy } from '@resume-builder/domain';
 import { getPrompt } from '../prompts';
 import type { ResumeStrategySchema } from '../schemas';
 
@@ -16,7 +16,7 @@ export class ResumeStrategist {
     this.logger = logger ?? new ConsoleLogger('resume-strategist');
   }
 
-  async plan(profile: CandidateProfile, jobAnalysis: JobAnalysis): Promise<ResumeStrategy> {
+  async plan(profile: CandidateProfile, jobAnalysis: JobAnalysis, facts: CandidateFact[] = []): Promise<ResumeStrategy> {
     const systemPrompt = getPrompt('plan-strategy-system');
     if (!systemPrompt) throw new Error('plan-strategy-system prompt not registered');
 
@@ -44,6 +44,9 @@ Candidate Profile:
 - Experience count: ${profileSummary.totalExperience}
 - Projects: ${profileSummary.totalProjects}
 - Top skills: ${profileSummary.topSkills.join(', ')}
+
+Candidate Evidence (select only from these IDs):
+${facts.map(f => `[${f.id}] (${f.category}) ${f.claim} — Source: ${f.sourceRef}`).join('\n') || '(No extracted facts available)'}
 
 Create a resume strategy for this candidate targeting this job.`,
       },

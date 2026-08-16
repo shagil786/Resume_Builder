@@ -45,7 +45,7 @@ Return only a JSON object with exactly these fields:
 - emphasize: array of strings
 - deemphasize: array of strings
 - experiencePriority: array of strings
-- selectedFacts: array of candidate fact IDs from the provided evidence
+- selectedFacts: array of candidate fact IDs from the provided evidence; select relevant IDs whenever evidence is available
 - sectionBudget: object with numeric summary, experience, projects, and skills budgets`,
 });
 
@@ -66,8 +66,13 @@ STRICT RULES:
 - Every bullet must trace back to at least one evidence fact
 - Write the ENTIRE resume in the specified language
 
-Return structured JSON with headline, summary, skills, and experience sections.
-Each experience bullet must include an evidence array referencing fact IDs.`,
+Return only a JSON object with exactly these fields:
+- headline: string
+- summary: string
+- skills: object mapping category names to arrays of strings
+- experience: array of objects with company, role, and bullets
+- each bullet must contain text and an evidence array referencing fact IDs
+Use empty arrays only when the provided evidence truly contains no matching information.`,
 });
 
 registerPrompt('fact-checker-system', {

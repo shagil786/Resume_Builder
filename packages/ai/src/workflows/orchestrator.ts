@@ -69,7 +69,7 @@ export class ResumeOrchestrator {
       const jobAnalysis = stage1.output as JobAnalysis;
 
       const stage2 = await this.runStage('resume_strategy', async () => {
-        const strategy = await this.strategist.plan(profile, jobAnalysis);
+        const strategy = await this.strategist.plan(profile, jobAnalysis, facts);
         return { output: strategy, refs: [profile.id, job.id] };
       });
       stages.push(stage2.log);
