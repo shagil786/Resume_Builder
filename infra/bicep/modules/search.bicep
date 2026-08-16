@@ -14,4 +14,3 @@ resource search 'Microsoft.Search/searchServices@2023-11-01' = {
 }
 
 output endpoint string = 'https://${search.name}.search.windows.net'
-output adminKey string = search.listAdminKeys().primaryKey

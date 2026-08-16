@@ -13,4 +13,3 @@ resource docIntel 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
 }
 
 output endpoint string = docIntel.properties.endpoint
-output key string = docIntel.listKeys().key1

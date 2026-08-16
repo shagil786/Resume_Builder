@@ -3,6 +3,7 @@ targetScope = 'resourceGroup'
 param location string = resourceGroup().location
 param environment string
 param containerImage string
+@secure()
 param postgresAdminPassword string
 
 module database './modules/database.bicep' = {
@@ -56,9 +57,13 @@ module containerApps './modules/container-apps.bicep' = {
   }
 }
 
+resource keyVaultResource 'Microsoft.KeyVault/vaults@2024-11-01' existing = {
+  name: 'resume-builder-kv-${environment}'
+}
+
 resource keyVaultSecretsUser 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceId('Microsoft.KeyVault/vaults', keyvault.outputs.name), containerApps.outputs.principalId, 'Key Vault Secrets User')
-  scope: resourceId('Microsoft.KeyVault/vaults', keyvault.outputs.name)
+  name: guid(keyVaultResource.id, 'resume-builder-api-${environment}', 'Key Vault Secrets User')
+  scope: keyVaultResource
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
     principalId: containerApps.outputs.principalId

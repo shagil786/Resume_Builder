@@ -17,20 +17,19 @@ resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2023-05-01'
   parent: storage
 }
 
-resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = [
-  {
-    name: 'resumes'
-    parent: blobService
-  }
-  {
-    name: 'generated'
-    parent: blobService
-  }
-  {
-    name: 'templates'
-    parent: blobService
-  }
-]
+resource resumesContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  name: 'resumes'
+  parent: blobService
+}
+
+resource generatedContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  name: 'generated'
+  parent: blobService
+}
+
+resource templatesContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  name: 'templates'
+  parent: blobService
+}
 
 output accountName string = storage.name
-output accountKey string = storage.listKeys().keys[0].value

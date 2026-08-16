@@ -1,6 +1,7 @@
 param location string = resourceGroup().location
 param environment string
 
+@secure()
 param postgresAdminPassword string
 
 resource postgres 'Microsoft.DBforPostgreSQL/flexibleServers@2024-08-01' = {
