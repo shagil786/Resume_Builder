@@ -36,7 +36,7 @@ async function mockTemplates(page: Page) {
 test.describe('Web App', () => {
   test('home page loads', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('h1')).toContainText('Build a resume that earns the interview.');
+    await expect(page.locator('h1')).toContainText('Make your experience easier to see.');
   });
 
   test('dashboard requires authentication', async ({ page }) => {

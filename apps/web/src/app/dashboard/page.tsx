@@ -10,26 +10,25 @@ export default function DashboardPage() {
   useEffect(() => { getDashboardStats().then(setStats); }, []);
 
   return (
-    <AuthGuard><div>
-      <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-      <p className="mt-1 text-sm text-slate-500">Overview of your candidate profile</p>
+    <AuthGuard><div className="page-shell">
+      <div className="page-header"><div><p className="eyebrow">Your workspace</p><h1 className="page-title">Good work starts with good evidence.</h1><p className="page-description">Keep your profile current, review what we extract, and tailor your next application from one place.</p></div><Link href="/job" className="btn btn-primary shrink-0">Build a resume <span aria-hidden>→</span></Link></div>
 
-      <div className="mt-6 grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {cards.map(card => (
           <Link key={card.key} href={card.href}
-            className="rounded-xl border border-slate-200 bg-white p-5 hover:shadow-sm transition-shadow">
-            <div className="text-3xl font-bold text-slate-900">{stats?.[card.key as keyof DashboardStats] ?? 0}</div>
-            <div className="mt-1 text-sm text-slate-500">{card.label}</div>
+            className="surface p-4 transition hover:-translate-y-0.5 hover:border-[#a9c8c1] sm:p-5">
+            <div className="text-3xl font-bold tracking-tight text-[#17211f]">{stats?.[card.key as keyof DashboardStats] ?? 0}</div>
+            <div className="mt-1 text-xs font-semibold text-[#64736f]">{card.label}</div>
           </Link>
         ))}
       </div>
 
-      <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="text-base font-semibold text-slate-900">Quick Actions</h2>
-        <div className="mt-4 flex gap-3">
-          <Link href="/upload" className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Upload Resume</Link>
-          <Link href="/job" className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Analyze Job</Link>
-          <Link href="/profile" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Edit Profile</Link>
+      <div className="surface mt-8 p-6 sm:p-7">
+        <p className="eyebrow">Next best action</p><h2 className="mt-2 section-title">Move your application forward</h2><p className="section-description">Choose the step that matches where you are today.</p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link href="/upload" className="btn btn-primary">Upload resume</Link>
+          <Link href="/job" className="btn btn-secondary">Analyze a job</Link>
+          <Link href="/profile" className="btn btn-secondary">Edit profile</Link>
         </div>
       </div>
     </div></AuthGuard>

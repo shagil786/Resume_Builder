@@ -19,6 +19,6 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     });
   }, [pathname, router]);
 
-  if (!ready) return <div className="rounded-2xl border border-slate-200 bg-white p-8 text-sm text-slate-500">Checking your session…</div>;
+  if (!ready) return <div className="surface mx-auto max-w-[1120px] p-6 text-sm text-[#64736f]">Checking your session…</div>;
   return <>{children}</>;
 }

@@ -2,40 +2,39 @@ import Link from 'next/link';
 
 export default function HomePage() {
   return (
-    <div className="space-y-16 py-8 sm:py-12">
-      <section className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+    <div className="page-shell space-y-20">
+      <section className="grid items-center gap-12 pt-4 lg:grid-cols-[1fr_0.9fr] lg:pt-10">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-700">Evidence-grounded career tools</p>
-          <h1 className="mt-5 max-w-2xl text-4xl font-bold tracking-tight text-slate-950 sm:text-6xl sm:leading-[1.05]">Build a resume that earns the interview.</h1>
-          <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">Turn your real experience into a focused, job-specific resume. Every claim stays connected to your source evidence.</p>
+          <p className="eyebrow">A calmer way to apply</p>
+          <h1 className="mt-5 max-w-2xl text-4xl font-bold tracking-[-.045em] text-[#13201d] sm:text-[58px] sm:leading-[1.02]">Make your experience easier to see.</h1>
+          <p className="mt-6 max-w-xl text-[17px] leading-8 text-[#64736f]">Build a focused resume for each role from the experience you already have. Review every extracted fact, keep your story honest, and apply with confidence.</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link href="/login" className="rounded-xl bg-teal-700 px-5 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800">Start with your resume</Link>
-            <Link href="/templates" className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-center text-sm font-semibold text-slate-800 transition hover:border-teal-600 hover:text-teal-700">Explore templates</Link>
+            <Link href="/login" className="btn btn-primary">Start with your resume <span aria-hidden>→</span></Link>
+            <Link href="/templates" className="btn btn-secondary">Explore templates</Link>
           </div>
-          <p className="mt-4 text-xs text-slate-500">PDF and DOCX supported · Your facts remain reviewable</p>
+          <p className="mt-4 text-xs font-medium text-[#8b9995]">PDF and DOCX supported · Your facts remain reviewable</p>
         </div>
-        <div className="relative overflow-hidden rounded-3xl bg-slate-950 p-6 shadow-xl sm:p-8">
-          <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-teal-600/30 blur-3xl" />
-          <div className="relative rounded-2xl bg-white p-5 shadow-2xl sm:p-7">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-              <div><p className="text-xs font-semibold uppercase tracking-wider text-teal-700">Resume workspace</p><p className="mt-1 text-lg font-bold text-slate-950">Product Designer · v3</p></div>
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Ready to review</span>
+        <div className="surface overflow-hidden bg-[#14231f] p-3 sm:p-4">
+          <div className="rounded-[14px] bg-white p-5 sm:p-7">
+            <div className="flex items-start justify-between gap-4 border-b border-[#e6ece9] pb-5">
+              <div><p className="eyebrow">Resume workspace</p><p className="mt-2 text-xl font-bold tracking-tight text-[#17211f]">Product Designer <span className="font-normal text-[#8b9995]">· v3</span></p></div>
+              <span className="shrink-0 rounded-md bg-[#e3f2ef] px-2.5 py-1.5 text-[11px] font-bold text-[#09564f]">Ready to review</span>
             </div>
-            <div className="mt-5 space-y-4">
+            <div className="mt-6 space-y-3">
               {['Experience matched to the role', 'Skills backed by source evidence', 'Layout checked for readability'].map((item, index) => (
-                <div key={item} className="flex items-center gap-3 rounded-xl bg-slate-50 p-3"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-100 text-sm text-teal-700">{index + 1}</span><span className="text-sm font-medium text-slate-700">{item}</span><span className="ml-auto text-teal-700">✓</span></div>
+                <div key={item} className="flex items-center gap-3 border-b border-[#edf1ef] py-3 last:border-0"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#e3f2ef] text-xs font-bold text-[#0d6b62]">{index + 1}</span><span className="text-sm font-semibold text-[#32433e]">{item}</span><span className="ml-auto text-sm font-bold text-[#087443]">✓</span></div>
               ))}
             </div>
-            <div className="mt-6 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full w-4/5 rounded-full bg-teal-600" /></div>
-            <p className="mt-2 text-right text-xs text-slate-500">80% of your profile is ready</p>
+            <div className="mt-6 flex items-center justify-between text-xs font-semibold text-[#64736f]"><span>Profile readiness</span><span>80%</span></div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#e7eeeb]"><div className="h-full w-4/5 bg-[#0d6b62]" /></div>
           </div>
         </div>
       </section>
 
       <section>
-        <div className="max-w-xl"><p className="text-sm font-semibold text-teal-700">A better workflow</p><h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">From raw resume to confident application.</h2></div>
+        <div className="max-w-xl"><p className="eyebrow">A better workflow</p><h2 className="mt-2 text-2xl font-bold tracking-tight text-[#17211f] sm:text-3xl">From raw resume to confident application.</h2></div>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {features.map((f, index) => <div key={f.title} className="rounded-2xl border border-slate-200 bg-white p-6"><span className="text-xs font-bold text-teal-700">0{index + 1}</span><h3 className="mt-8 font-semibold text-slate-950">{f.title}</h3><p className="mt-2 text-sm leading-6 text-slate-500">{f.desc}</p></div>)}
+          {features.map((f, index) => <div key={f.title} className="border-t-2 border-[#c8ded9] pt-5"><span className="text-xs font-bold text-[#0d6b62]">0{index + 1}</span><h3 className="mt-6 font-semibold text-[#17211f]">{f.title}</h3><p className="mt-2 text-sm leading-6 text-[#64736f]">{f.desc}</p></div>)}
         </div>
       </section>
     </div>

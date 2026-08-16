@@ -1,22 +1,68 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #132238;
-  --muted: #64748b;
-  --line: #dbe4ee;
+  --ink: #17211f;
+  --muted: #64736f;
+  --subtle: #8b9995;
+  --line: #d9e2df;
   --paper: #ffffff;
-  --canvas: #f5f7fa;
-  --accent: #0f766e;
-  --accent-soft: #e6f4f1;
+  --canvas: #f6f8f7;
+  --accent: #0d6b62;
+  --accent-strong: #09564f;
+  --accent-soft: #e3f2ef;
+  --danger: #b42318;
+  --success: #087443;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --shadow-sm: 0 1px 2px rgb(18 35 31 / 5%), 0 5px 18px rgb(18 35 31 / 4%);
 }
 
 * { box-sizing: border-box; }
 
 body { color: var(--ink); background: var(--canvas); }
 
+::selection { color: #fff; background: var(--accent); }
+
+.page-shell { width: min(1120px, calc(100% - 40px)); margin-inline: auto; padding-block: 48px 72px; }
+.page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 32px; }
+.eyebrow { color: var(--accent); font-size: 11px; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; }
+.page-title { margin-top: 8px; color: #13201d; font-size: clamp(28px, 4vw, 40px); font-weight: 750; letter-spacing: -.035em; line-height: 1.08; }
+.page-description { max-width: 650px; margin-top: 10px; color: var(--muted); font-size: 15px; line-height: 1.65; }
+.surface { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--paper); box-shadow: var(--shadow-sm); }
+.surface-muted { border: 1px solid var(--line); border-radius: var(--radius-lg); background: #f9fbfa; }
+.section-title { color: #1a2824; font-size: 18px; font-weight: 700; letter-spacing: -.015em; }
+.section-description { margin-top: 5px; color: var(--muted); font-size: 14px; line-height: 1.55; }
+.btn { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; gap: 8px; border-radius: var(--radius-sm); padding: 0 16px; font-size: 14px; font-weight: 700; transition: background-color .15s, border-color .15s, color .15s, transform .15s; }
+.btn:active { transform: translateY(1px); }
+.btn-primary { color: #fff; background: var(--accent); }
+.btn-primary:hover { background: var(--accent-strong); }
+.btn-secondary { color: #29403b; border: 1px solid var(--line); background: #fff; }
+.btn-secondary:hover { border-color: #a9c8c1; color: var(--accent-strong); background: #f8fcfb; }
+.btn-quiet { color: var(--muted); }
+.btn-quiet:hover { color: var(--accent-strong); background: var(--accent-soft); }
+.field-label { display: block; color: #32433e; font-size: 13px; font-weight: 700; }
+.field-control { display: block; width: 100%; margin-top: 7px; border: 1px solid #cbd8d4; border-radius: var(--radius-sm); background: #fff; padding: 11px 12px; color: var(--ink); font-size: 14px; line-height: 1.4; outline: none; transition: border-color .15s, box-shadow .15s; }
+.field-control::placeholder { color: #9aa8a4; }
+.field-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgb(13 107 98 / 14%); }
+.field-help { margin-top: 6px; color: var(--subtle); font-size: 12px; line-height: 1.45; }
+.status-success { border: 1px solid #b9e2cc; border-radius: var(--radius-md); background: #f0fbf4; color: var(--success); }
+.status-error { border: 1px solid #f2c4c0; border-radius: var(--radius-md); background: #fff7f6; color: var(--danger); }
+.status-info { border: 1px solid #c8ded9; border-radius: var(--radius-md); background: #f2faf8; color: #28635b; }
+
+@media (max-width: 640px) {
+  .page-shell { width: min(100% - 28px, 1120px); padding-block: 32px 56px; }
+  .page-header { align-items: flex-start; flex-direction: column; margin-bottom: 24px; }
+  .page-title { font-size: 30px; }
+}
+
 button, a, input, textarea { -webkit-tap-highlight-color: transparent; }
 
 button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
-  outline: 3px solid rgba(15, 118, 110, 0.35);
+  outline: 3px solid rgb(13 107 98 / 35%);
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }

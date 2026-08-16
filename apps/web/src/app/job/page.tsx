@@ -33,24 +33,21 @@ export default function JobPage() {
   };
 
   return (
-    <AuthGuard><div>
-      <h1 className="text-2xl font-bold text-slate-900">Job Description</h1>
-      <p className="mt-1 text-sm text-slate-500">Analyze a job posting and generate a tailored resume</p>
+    <AuthGuard><div className="page-shell">
+      <div className="page-header"><div><p className="eyebrow">Step 03 · Tailor your application</p><h1 className="page-title">Aim your resume at the role.</h1><p className="page-description">Share the job you want. We’ll match it against your reviewed facts and create a focused draft for you to inspect.</p></div></div>
 
-      <form onSubmit={handleGenerate} className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-white p-6">
+      <form onSubmit={handleGenerate} className="surface max-w-3xl space-y-5 p-5 sm:p-8">
         <div>
-          <label className="block text-sm font-medium text-slate-700">Company</label>
-          <input required value={company} onChange={e => setCompany(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <label className="field-label">Company<input required value={company} onChange={e => setCompany(e.target.value)} className="field-control" /></label>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Target title</label>
-          <input required value={title} onChange={e => setTitle(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <label className="field-label">Target title<input required value={title} onChange={e => setTitle(e.target.value)} className="field-control" /></label>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Job Posting URL</label>
+          <label className="field-label">Job posting URL</label>
           <input value={url} onChange={e => setUrl(e.target.value)}
             placeholder="https://company.com/jobs/..."
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none" />
+            className="field-control" />
         </div>
 
         <div className="relative">
@@ -58,23 +55,23 @@ export default function JobPage() {
             <div className="w-full border-t border-slate-200" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="bg-white px-2 text-slate-400">or paste the description</span>
+            <span className="bg-white px-2 text-xs font-semibold uppercase tracking-[.12em] text-[#8b9995]">or paste the description</span>
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700">Job Description</label>
+          <label className="field-label">Job description</label>
           <textarea value={text} onChange={e => setText(e.target.value)} rows={8}
             placeholder="Paste the full job description here..."
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none resize-y" />
+            className="field-control min-h-44 resize-y" />
         </div>
 
         <button type="submit" disabled={generating || !text || !company || !title}
-          className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50 transition-opacity">
+          className="btn btn-primary disabled:cursor-not-allowed disabled:opacity-50">
           {generating ? 'Generating...' : 'Generate Resume'}
         </button>
 
-        {result && <p className="text-sm text-slate-600">{result}</p>}
+        {result && <p role="status" className="status-info p-3 text-sm">{result}</p>}
       </form>
     </div></AuthGuard>
   );

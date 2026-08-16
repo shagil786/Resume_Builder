@@ -23,29 +23,28 @@ export default function UploadPage() {
   };
 
   return (
-    <AuthGuard><div>
-      <h1 className="text-2xl font-bold text-slate-900">Upload Resume</h1>
-      <p className="mt-1 text-sm text-slate-500">Upload a PDF or DOCX to extract career facts</p>
+    <AuthGuard><div className="page-shell">
+      <div className="page-header"><div><p className="eyebrow">Step 01 · Build your evidence</p><h1 className="page-title">Start with the resume you have.</h1><p className="page-description">We’ll turn your PDF or DOCX into reviewable career facts. Nothing is added to your story without your approval.</p></div></div>
 
-      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6">
+      <div className="surface max-w-3xl p-5 sm:p-8">
         <div
           onClick={() => inputRef.current?.click()}
-          className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-12 transition-colors hover:border-slate-400">
-          <div className="text-4xl">📄</div>
-          <p className="mt-3 text-sm font-medium text-slate-700">
+          className="flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-[#b9cbc6] bg-[#f7faf9] p-12 text-center transition-colors hover:border-[#0d6b62] hover:bg-[#f2faf8]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-md bg-[#e3f2ef] text-xl font-bold text-[#0d6b62]">↑</div>
+          <p className="mt-4 text-sm font-bold text-[#32433e]">
             {file ? file.name : 'Click to select a PDF or DOCX'}
           </p>
-          <p className="mt-1 text-xs text-slate-400">Max 10MB</p>
+          <p className="mt-2 text-xs text-[#8b9995]">PDF or DOCX · maximum 10MB</p>
           <input ref={inputRef} type="file" accept=".pdf,.docx" className="hidden"
             onChange={e => setFile(e.target.files?.[0] ?? null)} />
         </div>
 
         <button onClick={handleUpload} disabled={!file || uploading}
-          className="mt-4 rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50 transition-opacity">
+          className="btn btn-primary mt-5 disabled:cursor-not-allowed disabled:opacity-50">
           {uploading ? 'Uploading...' : 'Upload & Extract'}
         </button>
 
-        {result && <div className="mt-4 rounded-xl bg-slate-50 p-4 text-sm text-slate-600"><p>{result}</p><Link href="/facts" className="mt-2 inline-block font-semibold text-teal-700 hover:text-teal-800">Review extracted facts →</Link></div>}
+        {result && <div role="status" className="status-info mt-5 p-4 text-sm"><p>{result}</p><Link href="/facts" className="mt-2 inline-block font-bold text-[#0d6b62] hover:text-[#09564f]">Review extracted facts →</Link></div>}
       </div>
     </div></AuthGuard>
   );

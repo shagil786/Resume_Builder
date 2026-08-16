@@ -26,21 +26,20 @@ export default function PreviewPage() {
   };
 
   return (
-    <AuthGuard><div>
-      <h1 className="text-2xl font-bold text-slate-900">Preview</h1>
-      <p className="mt-1 text-sm text-slate-500">Preview your resume as rendered HTML</p>
+    <AuthGuard><div className="page-shell">
+      <div className="page-header"><div><p className="eyebrow">Review before you send</p><h1 className="page-title">Resume preview</h1><p className="page-description">Read the rendered version as a recruiter would. Go back and adjust your facts or target role whenever something feels off.</p></div></div>
 
-      <div className="mt-6 flex items-center gap-3">
+      <div className="surface flex flex-col items-stretch gap-3 p-4 sm:flex-row sm:items-center">
         <input value={profileId} onChange={e => setProfileId(e.target.value)}
-          placeholder="Profile ID" className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none w-64" />
+          placeholder="Profile ID" className="field-control mt-0 sm:max-w-xs" />
         <button onClick={loadPreview} disabled={loading}
-          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50 transition-opacity">
+          className="btn btn-primary disabled:opacity-50">
           {loading ? 'Loading...' : 'Load Preview'}
         </button>
       </div>
 
       {html && (
-        <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="surface mt-6 overflow-hidden">
           <iframe sandbox="" srcDoc={html} className="h-[800px] w-full" title="Resume Preview" />
         </div>
       )}
