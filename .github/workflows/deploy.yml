@@ -41,9 +41,12 @@ jobs:
         run: |
           npm run build:function -w @resume-builder/api
           rm -rf .function-package function-package.zip
-          mkdir -p .function-package/dist
+          mkdir -p .function-package/dist/migrations/meta
           cp apps/api/dist/function.js .function-package/dist/function.js
+          cp packages/db/src/migrations/*.sql .function-package/dist/migrations/
+          cp packages/db/src/migrations/meta/* .function-package/dist/migrations/meta/
           cp deploy/function/host.json deploy/function/package.json .function-package/
+          cp deploy/function/index.js .function-package/index.js
           (cd .function-package && zip -qr ../function-package.zip .)
 
       - name: Deploy to Azure Function App

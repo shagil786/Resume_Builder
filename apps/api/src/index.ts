@@ -23,6 +23,17 @@ import type { ApplicationConfig } from '@resume-builder/config';
 const PORT = parseInt(process.env.PORT ?? '3001', 10);
 const HOST = process.env.HOST ?? '0.0.0.0';
 
+async function bootstrapStage<T>(stage: string, operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    const code = typeof error === 'object' && error !== null && 'code' in error && typeof error.code === 'string'
+      ? error.code
+      : undefined;
+    throw new Error(`Application bootstrap failed at ${stage}${code ? ` (${code})` : ''}`);
+  }
+}
+
 async function requireOwnedProfile(request: { params: unknown; userId: string }, reply: { status: (code: number) => { send: (body: unknown) => unknown } }, service: ICandidateProfileService) {
   const profileId = (request.params as { profileId?: string }).profileId;
   if (!profileId) return;
@@ -60,7 +71,7 @@ function loadSearchConfig(config: ApplicationConfig): SearchConfig | null {
 }
 
 async function buildApp() {
-  const config = await loadApplicationConfig();
+  const config = await bootstrapStage('config', () => loadApplicationConfig());
   const app = Fastify({ logger: true });
 
   await app.register(cors, { origin: true });
@@ -78,7 +89,7 @@ async function buildApp() {
   if (dbConfig) {
     app.log.info('Connecting to database');
     db = createConnection(dbConfig);
-    await runMigrations(dbConfig);
+    await bootstrapStage('migrations', () => runMigrations(dbConfig));
     service = new DbCandidateProfileService(db);
     app.log.info('Database connected and migrations applied');
   } else {
@@ -89,37 +100,39 @@ async function buildApp() {
   await app.register(async (instance) => authRoutes(instance, db));
 
   const searchSync = new SearchSyncService(searchConfig ?? undefined);
-  await searchSync.initialize();
+  await bootstrapStage('search', () => searchSync.initialize());
 
-  await app.register(async (instance) => {
-    instance.addHook('preHandler', instance.authenticate);
-    instance.addHook('preHandler', async (request, reply) => requireOwnedProfile(request, reply, service));
-    await candidateRoutes(instance, service, searchSync);
-  }, { prefix: '/api/v1/candidates' });
+  await bootstrapStage('routes', async () => {
+    await app.register(async (instance) => {
+      instance.addHook('preHandler', instance.authenticate);
+      instance.addHook('preHandler', async (request, reply) => requireOwnedProfile(request, reply, service));
+      await candidateRoutes(instance, service, searchSync);
+    }, { prefix: '/api/v1/candidates' });
 
-  await app.register(async (instance) => {
-    instance.addHook('preHandler', instance.authenticate);
-    instance.addHook('preHandler', async (request, reply) => requireOwnedProfile(request, reply, service));
-    await generationRoutes(instance, service, config.azureOpenAI, db);
-  }, { prefix: '/api/v1/candidates' });
+    await app.register(async (instance) => {
+      instance.addHook('preHandler', instance.authenticate);
+      instance.addHook('preHandler', async (request, reply) => requireOwnedProfile(request, reply, service));
+      await generationRoutes(instance, service, config.azureOpenAI, db);
+    }, { prefix: '/api/v1/candidates' });
 
-  await app.register(async (instance) => {
-    instance.addHook('preHandler', instance.authenticate);
-    instance.addHook('preHandler', async (request, reply) => requireOwnedProfile(request, reply, service));
-    await renderingRoutes(instance, service);
-  }, { prefix: '/api/v1/candidates' });
+    await app.register(async (instance) => {
+      instance.addHook('preHandler', instance.authenticate);
+      instance.addHook('preHandler', async (request, reply) => requireOwnedProfile(request, reply, service));
+      await renderingRoutes(instance, service);
+    }, { prefix: '/api/v1/candidates' });
 
-  await app.register(async (instance) => {
-    instance.addHook('preHandler', instance.authenticate);
-    instance.addHook('preHandler', async (request, reply) => requireOwnedProfile(request, reply, service));
-    await documentRoutes(instance, service, docConfig, db, searchSync);
-  }, { prefix: '/api/v1/candidates' });
+    await app.register(async (instance) => {
+      instance.addHook('preHandler', instance.authenticate);
+      instance.addHook('preHandler', async (request, reply) => requireOwnedProfile(request, reply, service));
+      await documentRoutes(instance, service, docConfig, db, searchSync);
+    }, { prefix: '/api/v1/candidates' });
 
-  await app.register(async (instance) => {
-    instance.addHook('preHandler', instance.authenticate);
-    instance.addHook('preHandler', async (request, reply) => requireOwnedProfile(request, reply, service));
-    await coverLetterRoutes(instance, service, config.azureOpenAI);
-  }, { prefix: '/api/v1/candidates' });
+    await app.register(async (instance) => {
+      instance.addHook('preHandler', instance.authenticate);
+      instance.addHook('preHandler', async (request, reply) => requireOwnedProfile(request, reply, service));
+      await coverLetterRoutes(instance, service, config.azureOpenAI);
+    }, { prefix: '/api/v1/candidates' });
+  });
 
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 
