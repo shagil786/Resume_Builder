@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, type CandidateProfileResponse } from '../../lib/api';
 import { AuthGuard } from '../components/auth-guard';
@@ -31,16 +31,22 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState(false);
 
-  useEffect(() => {
+  const loadProfile = useCallback(async () => {
     const savedId = window.localStorage.getItem('resume_builder_profile_id');
     if (!savedId) { setLoading(false); return; }
+    setLoading(true); setError(null);
     setProfileId(savedId);
-    api.candidates.get(savedId).then(response => {
+    try {
+      const response = await api.candidates.get(savedId);
       if (response.data) setForm(profileToForm(response.data));
       else setError(response.error ?? 'Unable to load your profile');
-      setLoading(false);
-    });
+    } catch { setError('We could not reach your profile.'); }
+    finally { setLoading(false); }
   }, []);
+
+  useEffect(() => {
+    void loadProfile();
+  }, [loadProfile]);
 
   const setField = (field: keyof ProfileForm, value: string) => setForm(current => ({ ...current, [field]: value }));
 
@@ -74,7 +80,7 @@ export default function ProfilePage() {
     <div className="space-y-8">
       <div className="page-header"><div><p className="eyebrow">Your foundation</p><h1 className="page-title">Candidate profile</h1><p className="page-description">Start with the details you want employers to see. Add experience, skills, and verified facts after your profile is saved.</p></div>{profileId && <span className="rounded-md bg-[#e3f2ef] px-3 py-1.5 text-xs font-bold text-[#087443]">Draft profile</span>}</div>
 
-      {loading ? <div className="surface p-8 text-sm text-[#64736f]">Loading your profile…</div> : <form onSubmit={saveProfile} className="grid gap-6 lg:grid-cols-[1fr_300px]">
+      {loading ? <div className="surface p-8 text-sm text-[#64736f]">Loading your profile…</div> : error && profileId ? <div role="alert" className="status-error flex max-w-xl flex-col justify-between gap-3 p-5 text-sm sm:flex-row sm:items-center"><span>{error}</span><button type="button" onClick={() => void loadProfile()} className="btn btn-secondary min-h-[34px] px-3 text-xs">Try again</button></div> : <form onSubmit={saveProfile} className="grid gap-6 lg:grid-cols-[1fr_300px]">
         <div className="space-y-6">
           <section className="surface p-6"><h2 className="section-title">Contact details</h2><p className="section-description">These details will appear on your resume header.</p><div className="mt-5 grid gap-4 sm:grid-cols-2">{(['firstName','lastName','email','phone','location'] as const).map(field => <label key={field} className={`${field === 'location' ? 'sm:col-span-2' : ''} field-label`}>{field === 'firstName' ? 'First name' : field === 'lastName' ? 'Last name' : field}<input required={field === 'firstName' || field === 'lastName' || field === 'email'} type={field === 'email' ? 'email' : 'text'} value={form[field]} onChange={event => setField(field, event.target.value)} className="field-control" /></label>)}</div></section>
           <section className="surface p-6"><h2 className="section-title">Professional links</h2><p className="section-description">Optional links help recruiters validate your work.</p><div className="mt-5 grid gap-4 sm:grid-cols-3">{(['linkedinUrl','githubUrl','portfolioUrl'] as const).map(field => <label key={field} className="field-label">{field === 'linkedinUrl' ? 'LinkedIn' : field === 'githubUrl' ? 'GitHub' : 'Portfolio'}<input type="url" value={form[field]} onChange={event => setField(field, event.target.value)} placeholder="https://" className="field-control" /></label>)}</div></section>

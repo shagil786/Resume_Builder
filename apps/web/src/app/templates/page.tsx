@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../lib/api';
 
 interface Template { id: string; name: string; description: string; category: string; }
@@ -10,23 +10,27 @@ export default function TemplatesPage() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    api.templates.list().then(response => {
-      if (!active) return;
+  const loadTemplates = useCallback(async () => {
+    setLoading(true); setError(null);
+    try {
+      const response = await api.templates.list();
       if (response.data) setTemplates(response.data.templates);
       else setError(response.error ?? 'Unable to load templates');
-      setLoading(false);
-    });
-    return () => { active = false; };
+    } catch {
+      setError('We could not reach the template service.');
+    } finally { setLoading(false); }
   }, []);
+
+  useEffect(() => {
+    void loadTemplates();
+  }, [loadTemplates]);
 
   return (
     <div className="page-shell">
       <div className="page-header"><div><p className="eyebrow">Presentation</p><h1 className="page-title">Templates that keep the focus on you.</h1><p className="page-description">Choose a clear starting point for your resume. You can change the layout as your application evolves.</p></div></div>
 
       {loading && <div className="surface p-8 text-sm text-[#64736f]">Loading templates…</div>}
-      {error && <p role="alert" className="status-error p-4 text-sm">{error}</p>}
+      {error && <div role="alert" className="status-error flex flex-col justify-between gap-3 p-4 text-sm sm:flex-row sm:items-center"><span>{error}</span><button type="button" onClick={() => void loadTemplates()} className="btn btn-secondary min-h-[34px] px-3 text-xs">Try again</button></div>}
 
       <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {templates.map(t => (
