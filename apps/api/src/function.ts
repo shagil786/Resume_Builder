@@ -4,12 +4,37 @@ import { buildApp } from './index.js';
 
 let appPromise: ReturnType<typeof buildApp> | undefined;
 
+function allowedCorsOrigins(): string[] {
+  const configured = (process.env.CORS_ORIGINS ?? '')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
+  return configured.length > 0 ? configured : ['http://localhost:3000', 'http://127.0.0.1:3000'];
+}
+
+function corsHeaders(request: HttpRequest): Record<string, string> {
+  const origin = request.headers.get('origin');
+  if (!origin || !allowedCorsOrigins().includes(origin)) return {};
+  return {
+    'access-control-allow-origin': origin,
+    'access-control-allow-credentials': 'true',
+    'access-control-allow-methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+    'access-control-allow-headers': request.headers.get('access-control-request-headers') ?? 'content-type',
+    vary: 'Origin',
+  };
+}
+
 function isLivenessRequest(request: HttpRequest): boolean {
   const pathname = new URL(request.url).pathname.replace(/^\/api(?=\/|$)/, '');
   return request.method === 'GET' && (pathname === '/health' || pathname === '/');
 }
 
 async function handler(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
+  const headers = corsHeaders(request);
+  if (request.method === 'OPTIONS') {
+    return { status: 204, headers };
+  }
+
   // Keep the platform liveness probe independent of application dependencies.
   // Readiness and all API routes still initialize the full application below.
   if (isLivenessRequest(request)) {
@@ -30,7 +55,10 @@ async function handler(request: HttpRequest, context: InvocationContext): Promis
 
     return {
       status: response.statusCode,
-      headers: Object.fromEntries(Object.entries(response.headers).map(([key, value]) => [key, String(value)])),
+      headers: {
+        ...Object.fromEntries(Object.entries(response.headers).map(([key, value]) => [key, String(value)])),
+        ...headers,
+      },
       body: response.body,
     };
   } catch (error) {
