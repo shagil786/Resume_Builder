@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { api, type CandidateProfileResponse } from '../../lib/api';
 import { AuthGuard } from '../components/auth-guard';
 
@@ -28,6 +29,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [created, setCreated] = useState(false);
 
   useEffect(() => {
     const savedId = window.localStorage.getItem('resume_builder_profile_id');
@@ -54,7 +56,15 @@ export default function ProfilePage() {
       const id = profileId || ('profileId' in response.data ? response.data.profileId : '');
       window.localStorage.setItem('resume_builder_profile_id', id);
       setProfileId(id);
-      if (!profileId) setStatus('Profile created. Your workspace is ready for a resume upload.');
+      if (!profileId && form.summary.trim()) {
+        const summaryResponse = await api.candidates.update(id, { summary: form.summary.trim() });
+        if (summaryResponse.error) {
+          setError(`Profile created, but the summary could not be saved: ${summaryResponse.error}`);
+          setSaving(false);
+          return;
+        }
+      }
+      if (!profileId) { setCreated(true); setStatus('Profile created. Your workspace is ready for a resume upload.'); }
       else setStatus('Profile saved.');
     }
     setSaving(false);
@@ -70,7 +80,7 @@ export default function ProfilePage() {
           <section className="surface p-6"><h2 className="section-title">Professional links</h2><p className="section-description">Optional links help recruiters validate your work.</p><div className="mt-5 grid gap-4 sm:grid-cols-3">{(['linkedinUrl','githubUrl','portfolioUrl'] as const).map(field => <label key={field} className="field-label">{field === 'linkedinUrl' ? 'LinkedIn' : field === 'githubUrl' ? 'GitHub' : 'Portfolio'}<input type="url" value={form[field]} onChange={event => setField(field, event.target.value)} placeholder="https://" className="field-control" /></label>)}</div></section>
           <section className="surface p-6"><h2 className="section-title">Professional summary</h2><p className="section-description">A short overview gives the generator context before it tailors your resume.</p><textarea value={form.summary} onChange={event => setField('summary', event.target.value)} rows={5} placeholder="Example: Product designer with 6 years of experience building accessible workflow tools…" className="field-control mt-5 resize-y leading-6" /></section>
         </div>
-        <aside className="surface-muted h-fit bg-[#14231f] p-6 text-white"><p className="eyebrow text-[#8cd1c5]">Next steps</p><h2 className="mt-3 text-xl font-semibold">Build your evidence base.</h2><p className="mt-3 text-sm leading-6 text-[#c4d2ce]">Once your profile is saved, upload a resume so we can extract experience and skills for your review.</p><button type="submit" disabled={saving} className="btn mt-6 w-full bg-[#8cd1c5] text-[#14231f] hover:bg-[#a9ded5] disabled:opacity-50">{saving ? 'Saving…' : profileId ? 'Save profile' : 'Create profile'}</button>{profileId && <p className="mt-4 break-all text-xs text-[#9eb2ac]">Profile ID: {profileId}</p>}{status && <p role="status" className="mt-4 rounded-md bg-[#8cd1c5]/10 p-3 text-sm text-[#bfe8df]">{status}</p>}{error && <p role="alert" className="mt-4 rounded-md bg-red-400/10 p-3 text-sm text-red-200">{error}</p>}</aside>
+        <aside className="surface-muted h-fit bg-[#14231f] p-6 text-white"><p className="eyebrow text-[#8cd1c5]">Next steps</p><h2 className="mt-3 text-xl font-semibold">Build your evidence base.</h2><div className="mt-5 space-y-3 text-sm"><div className="flex gap-3"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#8cd1c5] text-xs font-bold text-[#14231f]">1</span><span className="text-[#e0ebe8]">Save your contact details</span></div><div className="flex gap-3"><span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${profileId ? 'bg-[#8cd1c5] text-[#14231f]' : 'bg-white/15 text-[#9eb2ac]'}`}>2</span><span className={profileId ? 'text-[#e0ebe8]' : 'text-[#9eb2ac]'}>Upload a resume for extraction</span></div><div className="flex gap-3"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15 text-xs font-bold text-[#9eb2ac]">3</span><span className="text-[#9eb2ac]">Review facts and tailor a role</span></div></div><button type="submit" disabled={saving} className="btn mt-6 w-full bg-[#8cd1c5] text-[#14231f] hover:bg-[#a9ded5] disabled:opacity-50">{saving ? 'Saving…' : profileId ? 'Save profile' : 'Create profile'}</button>{created && <Link href="/upload" className="btn mt-3 w-full border border-[#8cd1c5]/40 text-[#bfe8df] hover:bg-white/10">Continue to upload →</Link>}{profileId && <p className="mt-4 break-all text-xs text-[#9eb2ac]">Profile ID: {profileId}</p>}{status && <p role="status" className="mt-4 rounded-md bg-[#8cd1c5]/10 p-3 text-sm text-[#bfe8df]">{status}</p>}{error && <p role="alert" className="mt-4 rounded-md bg-red-400/10 p-3 text-sm text-red-200">{error}</p>}</aside>
       </form>}
     </div>
   </div></AuthGuard>;
