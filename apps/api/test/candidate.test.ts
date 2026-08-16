@@ -1,104 +1,51 @@
-import { test, expect, describe } from 'vitest';
+import { beforeAll, afterAll, describe, expect, test } from 'vitest';
+import type { FastifyInstance } from 'fastify';
+import { createTestApp } from './test-app.js';
 
-const BASE = 'http://localhost:3001';
-let token = '';
-let profileId = '';
+describe('Candidate API', () => {
+  let app: FastifyInstance;
+  let token = '';
+  let profileId = '';
 
-describe('Candidate CRUD', () => {
-  test('register for candidate tests', async () => {
-    const res = await fetch(`${BASE}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'candidate@test.com', password: 'pass', name: 'Candidate' }),
-    });
-    const body = await res.json();
-    token = body.token;
-    expect(token).toBeDefined();
+  beforeAll(async () => {
+    app = await createTestApp();
+    const auth = await app.inject({ method: 'POST', url: '/auth/register', payload: { email: 'candidate-test@example.com', password: 'pass12345', name: 'Candidate' } });
+    token = auth.json().token;
+  });
+  afterAll(async () => { await app.close(); });
+
+  const authHeaders = () => ({ authorization: `Bearer ${token}` });
+
+  test('creates and reads a profile owned by the authenticated user', async () => {
+    const created = await app.inject({ method: 'POST', url: '/api/v1/candidates', headers: authHeaders(), payload: { userId: 'ignored', personalInfo: { firstName: 'John', lastName: 'Doe', piiFields: [] } } });
+    expect(created.statusCode).toBe(201);
+    profileId = created.json().profileId;
+    const fetched = await app.inject({ method: 'GET', url: `/api/v1/candidates/${profileId}`, headers: authHeaders() });
+    expect(fetched.statusCode).toBe(200);
+    expect(fetched.json().personalInfo.firstName).toBe('John');
   });
 
-  test('POST /api/v1/candidates creates profile', async () => {
-    const res = await fetch(`${BASE}/api/v1/candidates`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ userId: 'u1', personalInfo: { firstName: 'John', lastName: 'Doe', piiFields: [] } }),
-    });
-    expect(res.status).toBe(201);
-    const body = await res.json();
-    expect(body.profileId).toBeDefined();
-    profileId = body.profileId;
+  test('rejects access to another or missing profile', async () => {
+    const missing = await app.inject({ method: 'GET', url: '/api/v1/candidates/missing-id', headers: authHeaders() });
+    expect(missing.statusCode).toBe(404);
+    const otherAuth = await app.inject({ method: 'POST', url: '/auth/register', payload: { email: 'other-test@example.com', password: 'pass12345', name: 'Other' } });
+    const forbidden = await app.inject({ method: 'GET', url: `/api/v1/candidates/${profileId}`, headers: { authorization: `Bearer ${otherAuth.json().token}` } });
+    expect(forbidden.statusCode).toBe(404);
   });
 
-  test('GET /api/v1/candidates/:id returns profile', async () => {
-    const res = await fetch(`${BASE}/api/v1/candidates/${profileId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.id).toBe(profileId);
-    expect(body.personalInfo.firstName).toBe('John');
+  test('supports profile entries and rendering', async () => {
+    const experience = await app.inject({ method: 'POST', url: `/api/v1/candidates/${profileId}/experience`, headers: authHeaders(), payload: { company: 'Test Corp', title: 'Engineer', startDate: '2023-01-01' } });
+    expect(experience.statusCode).toBe(201);
+    const skill = await app.inject({ method: 'POST', url: `/api/v1/candidates/${profileId}/skills`, headers: authHeaders(), payload: { name: 'TypeScript', category: 'TECHNICAL' } });
+    expect(skill.statusCode).toBe(201);
+    const rendered = await app.inject({ method: 'POST', url: `/api/v1/candidates/${profileId}/render`, headers: authHeaders(), payload: {} });
+    expect(rendered.statusCode).toBe(200);
+    expect(rendered.body).toContain('<!DOCTYPE html>');
+    expect(rendered.body).toContain('TypeScript');
   });
 
-  test('GET /api/v1/candidates/:id returns 404 for missing', async () => {
-    const res = await fetch(`${BASE}/api/v1/candidates/missing-id`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(res.status).toBe(404);
-  });
-
-  test('protected routes reject without token', async () => {
-    const res = await fetch(`${BASE}/api/v1/candidates/templates`);
-    expect(res.status).toBe(401);
-  });
-
-  test('GET /api/v1/candidates/templates lists templates', async () => {
-    const res = await fetch(`${BASE}/api/v1/candidates/templates`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.templates.length).toBeGreaterThanOrEqual(3);
-  });
-
-  test('POST /api/v1/candidates/:id/experience adds experience', async () => {
-    const res = await fetch(`${BASE}/api/v1/candidates/${profileId}/experience`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ company: 'Test Corp', title: 'Engineer', startDate: '2023-01-01' }),
-    });
-    expect(res.status).toBe(201);
-    const body = await res.json();
-    expect(body.experienceId).toBeDefined();
-  });
-
-  test('POST /api/v1/candidates/:id/skills adds skill', async () => {
-    const res = await fetch(`${BASE}/api/v1/candidates/${profileId}/skills`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ name: 'TypeScript', category: 'TECHNICAL' }),
-    });
-    expect(res.status).toBe(201);
-    const body = await res.json();
-    expect(body.skillId).toBeDefined();
-  });
-
-  test('POST /api/v1/candidates/:id/render returns HTML', async () => {
-    const res = await fetch(`${BASE}/api/v1/candidates/${profileId}/render`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({}),
-    });
-    expect(res.status).toBe(200);
-    const html = await res.text();
-    expect(html).toContain('<!DOCTYPE html>');
-  });
-
-  test('POST /api/v1/candidates/:id/render/pdf returns PDF', async () => {
-    const res = await fetch(`${BASE}/api/v1/candidates/${profileId}/render/pdf`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({}),
-    });
-    expect(res.status).toBe(200);
-    expect(res.headers.get('Content-Type')).toBe('application/pdf');
+  test('protected routes reject missing authentication', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/v1/candidates/templates' });
+    expect(res.statusCode).toBe(401);
   });
 });

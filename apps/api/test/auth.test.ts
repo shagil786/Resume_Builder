@@ -1,64 +1,41 @@
-import { test, expect, describe, beforeAll, afterAll } from 'vitest';
-
-const BASE = 'http://localhost:3001';
-
-let token = '';
+import { beforeAll, afterAll, describe, expect, test } from 'vitest';
+import type { FastifyInstance } from 'fastify';
+import { createTestApp } from './test-app.js';
 
 describe('Auth Flow', () => {
-  test('POST /auth/register creates user and returns token', async () => {
-    const res = await fetch(`${BASE}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'test@test.com', password: 'pass123', name: 'Test User' }),
-    });
-    expect(res.status).toBe(201);
-    const body = await res.json();
+  let app: FastifyInstance;
+  let token = '';
+
+  beforeAll(async () => { app = await createTestApp(); });
+  afterAll(async () => { await app.close(); });
+
+  test('register creates a user and returns a token', async () => {
+    const res = await app.inject({ method: 'POST', url: '/auth/register', payload: { email: 'auth-test@example.com', password: 'pass12345', name: 'Test User' } });
+    expect(res.statusCode).toBe(201);
+    const body = res.json();
     expect(body.token).toBeDefined();
-    expect(body.user.email).toBe('test@test.com');
-    expect(body.user.name).toBe('Test User');
+    expect(body.user.email).toBe('auth-test@example.com');
     token = body.token;
   });
 
-  test('POST /auth/register rejects duplicate email', async () => {
-    const res = await fetch(`${BASE}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'test@test.com', password: 'pass123', name: 'Another' }),
-    });
-    expect(res.status).toBe(409);
+  test('rejects duplicate email and wrong password', async () => {
+    const duplicate = await app.inject({ method: 'POST', url: '/auth/register', payload: { email: 'auth-test@example.com', password: 'pass12345', name: 'Another' } });
+    expect(duplicate.statusCode).toBe(409);
+    const wrongPassword = await app.inject({ method: 'POST', url: '/auth/login', payload: { email: 'auth-test@example.com', password: 'wrongpass' } });
+    expect(wrongPassword.statusCode).toBe(401);
   });
 
-  test('POST /auth/login returns token', async () => {
-    const res = await fetch(`${BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'test@test.com', password: 'pass123' }),
-    });
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.token).toBeDefined();
+  test('login and auth/me work with a valid token', async () => {
+    const login = await app.inject({ method: 'POST', url: '/auth/login', payload: { email: 'auth-test@example.com', password: 'pass12345' } });
+    expect(login.statusCode).toBe(200);
+    token = login.json().token;
+    const me = await app.inject({ method: 'GET', url: '/auth/me', headers: { authorization: `Bearer ${token}` } });
+    expect(me.statusCode).toBe(200);
+    expect(me.json().email).toBe('auth-test@example.com');
   });
 
-  test('POST /auth/login rejects wrong password', async () => {
-    const res = await fetch(`${BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'test@test.com', password: 'wrong' }),
-    });
-    expect(res.status).toBe(401);
-  });
-
-  test('GET /auth/me returns user info with valid token', async () => {
-    const res = await fetch(`${BASE}/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.email).toBe('test@test.com');
-  });
-
-  test('GET /auth/me rejects without token', async () => {
-    const res = await fetch(`${BASE}/auth/me`);
-    expect(res.status).toBe(401);
+  test('rejects unauthenticated requests', async () => {
+    const res = await app.inject({ method: 'GET', url: '/auth/me' });
+    expect(res.statusCode).toBe(401);
   });
 });

@@ -53,27 +53,60 @@ export class CandidateProfileService implements ICandidateProfileService {
       context: '', confidence: 1.0, status: 'USER_PROVIDED', category: 'WORK',
       timestamp: new Date(), version: 1,
     });
-    return { experienceId: `exp-${this.counter}` };
+    const experienceId = `exp-${this.counter}`;
+    profile.workExperience.push({
+      id: experienceId,
+      profileId,
+      company: data.company,
+      title: data.title,
+      startDate: new Date(data.startDate),
+      endDate: data.endDate ? new Date(data.endDate) : undefined,
+      location: data.location,
+      factIds: [factId],
+      bulletPoints: [],
+    });
+    profile.updatedAt = new Date();
+    return { experienceId };
   }
 
   async updateExperience(_profileId: string, _experienceId: string, _data: Partial<WorkExperience>): Promise<void> {}
 
   async deleteExperience(_profileId: string, _experienceId: string): Promise<void> {}
 
-  async addProject(_profileId: string, _data: ProjectInput): Promise<{ projectId: string }> {
-    return { projectId: `proj-${++this.counter}` };
+  async addProject(profileId: string, data: ProjectInput): Promise<{ projectId: string }> {
+    const profile = this.profiles.get(profileId);
+    if (!profile) throw new AppError('CANDIDATE_PROFILE_NOT_FOUND', 'Profile not found');
+    const projectId = `proj-${++this.counter}`;
+    profile.projects.push({ ...data, id: projectId, profileId, startDate: new Date(data.startDate ?? Date.now()), endDate: data.endDate ? new Date(data.endDate) : undefined, factIds: data.factIds ?? [], bulletPoints: [] });
+    profile.updatedAt = new Date();
+    return { projectId };
   }
 
-  async addSkill(_profileId: string, _data: Omit<Skill, 'id' | 'profileId'>): Promise<{ skillId: string }> {
-    return { skillId: `skill-${++this.counter}` };
+  async addSkill(profileId: string, data: Omit<Skill, 'id' | 'profileId'>): Promise<{ skillId: string }> {
+    const profile = this.profiles.get(profileId);
+    if (!profile) throw new AppError('CANDIDATE_PROFILE_NOT_FOUND', 'Profile not found');
+    const skillId = `skill-${++this.counter}`;
+    profile.skills.push({ ...data, id: skillId, profileId });
+    profile.updatedAt = new Date();
+    return { skillId };
   }
 
-  async addEducation(_profileId: string, _data: EducationInput): Promise<{ educationId: string }> {
-    return { educationId: `edu-${++this.counter}` };
+  async addEducation(profileId: string, data: EducationInput): Promise<{ educationId: string }> {
+    const profile = this.profiles.get(profileId);
+    if (!profile) throw new AppError('CANDIDATE_PROFILE_NOT_FOUND', 'Profile not found');
+    const educationId = `edu-${++this.counter}`;
+    profile.education.push({ ...data, id: educationId, profileId, startDate: new Date(data.startDate ?? Date.now()), endDate: new Date(data.endDate ?? Date.now()), factIds: data.factIds ?? [] });
+    profile.updatedAt = new Date();
+    return { educationId };
   }
 
-  async addCertification(_profileId: string, _data: CertificationInput): Promise<{ certificationId: string }> {
-    return { certificationId: `cert-${++this.counter}` };
+  async addCertification(profileId: string, data: CertificationInput): Promise<{ certificationId: string }> {
+    const profile = this.profiles.get(profileId);
+    if (!profile) throw new AppError('CANDIDATE_PROFILE_NOT_FOUND', 'Profile not found');
+    const certificationId = `cert-${++this.counter}`;
+    profile.certifications.push({ ...data, id: certificationId, profileId, issueDate: new Date(data.issueDate ?? Date.now()), expiryDate: data.expiryDate ? new Date(data.expiryDate) : undefined, factIds: data.factIds ?? [] });
+    profile.updatedAt = new Date();
+    return { certificationId };
   }
 
   async searchFacts(_profileId: string, _query: string): Promise<{ facts: CandidateFact[]; total: number }> {
