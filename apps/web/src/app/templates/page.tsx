@@ -16,36 +16,32 @@ export default function TemplatesPage() {
 
   return (
     <div>
-      <h1 style={h1}>Templates</h1>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
+      <h1 className="text-2xl font-bold text-slate-900">Templates</h1>
+      <p className="mt-1 text-sm text-slate-500">Choose a layout for your resume</p>
+
+      <div className="mt-6 grid grid-cols-3 gap-5">
         {templates.map(t => (
-          <div
-            key={t.id}
-            onClick={() => setSelected(t.id)}
-            style={{
-              ...card,
-              borderColor: selected === t.id ? '#1a1a2e' : '#e0e0e0',
-              boxShadow: selected === t.id ? '0 0 0 2px #1a1a2e' : undefined,
-            }}
-          >
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e', marginBottom: 4 }}>{t.name}</div>
-            <div style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>{t.description}</div>
-            <span style={badge}>{t.category}</span>
-          </div>
+          <button key={t.id} onClick={() => setSelected(t.id)}
+            className={`rounded-xl border-2 p-5 text-left transition-all ${
+              selected === t.id
+                ? 'border-slate-900 bg-slate-50 shadow-sm'
+                : 'border-slate-200 bg-white hover:border-slate-300'
+            }`}>
+            <div className="mb-1 h-32 rounded-lg bg-slate-100 flex items-center justify-center text-4xl">
+              {t.category === 'PROFESSIONAL' ? '📋' : t.category === 'ACADEMIC' ? '🎓' : '✨'}
+            </div>
+            <h3 className="mt-3 font-semibold text-slate-900">{t.name}</h3>
+            <p className="mt-1 text-xs text-slate-500 line-clamp-2">{t.description}</p>
+            <span className="mt-2 inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+              {t.category}
+            </span>
+          </button>
         ))}
       </div>
+
       {templates.length === 0 && (
-        <p style={{ fontSize: 14, color: '#999' }}>No templates loaded. Make sure the API server is running.</p>
+        <p className="mt-8 text-sm text-slate-400 text-center">No templates loaded. Make sure the API server is running.</p>
       )}
     </div>
   );
 }
-
-const h1: React.CSSProperties = { fontSize: 24, fontWeight: 700, margin: '0 0 20px' };
-const card: React.CSSProperties = {
-  background: '#fff', borderRadius: 8, padding: 16, border: '2px solid #e0e0e0', cursor: 'pointer',
-};
-const badge: React.CSSProperties = {
-  display: 'inline-block', padding: '2px 8px', background: '#f0f0f0', borderRadius: 4,
-  fontSize: 11, color: '#666', fontWeight: 600,
-};

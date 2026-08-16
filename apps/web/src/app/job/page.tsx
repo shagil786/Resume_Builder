@@ -10,36 +10,46 @@ export default function JobPage() {
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     setGenerating(true);
-    setResult('Generation requires a profile ID and configured AI. Coming soon.');
+    setResult('Generation requires a profile ID and configured AI. Use the API directly for now.');
     setGenerating(false);
   };
 
   return (
     <div>
-      <h1 style={h1}>Job Description</h1>
-      <form onSubmit={handleGenerate} style={{ background: '#fff', borderRadius: 8, padding: 24, border: '1px solid #e0e0e0' }}>
-        <label style={label}>Job Posting URL</label>
-        <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://company.com/jobs/..." style={input} />
+      <h1 className="text-2xl font-bold text-slate-900">Job Description</h1>
+      <p className="mt-1 text-sm text-slate-500">Analyze a job posting and generate a tailored resume</p>
 
-        <label style={label}>Or paste the job description</label>
-        <textarea value={text} onChange={e => setText(e.target.value)} rows={8} placeholder="Paste job description here..." style={{ ...input, resize: 'vertical' as const }} />
+      <form onSubmit={handleGenerate} className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-white p-6">
+        <div>
+          <label className="block text-sm font-medium text-slate-700">Job Posting URL</label>
+          <input value={url} onChange={e => setUrl(e.target.value)}
+            placeholder="https://company.com/jobs/..."
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none" />
+        </div>
 
-        <button type="submit" disabled={generating || (!url && !text)} style={{ ...btn, opacity: generating || (!url && !text) ? 0.6 : 1 }}>
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-200" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-white px-2 text-slate-400">or paste the description</span>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700">Job Description</label>
+          <textarea value={text} onChange={e => setText(e.target.value)} rows={8}
+            placeholder="Paste the full job description here..."
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none resize-y" />
+        </div>
+
+        <button type="submit" disabled={generating || (!url && !text)}
+          className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50 transition-opacity">
           {generating ? 'Generating...' : 'Generate Resume'}
         </button>
-        {result && <p style={{ marginTop: 12, fontSize: 14, color: '#333' }}>{result}</p>}
+
+        {result && <p className="text-sm text-slate-600">{result}</p>}
       </form>
     </div>
   );
 }
-
-const h1: React.CSSProperties = { fontSize: 24, fontWeight: 700, margin: '0 0 20px' };
-const label: React.CSSProperties = { display: 'block', fontSize: 13, fontWeight: 600, color: '#333', margin: '0 0 4px 12px' };
-const input: React.CSSProperties = {
-  width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 6,
-  fontSize: 14, marginBottom: 16, boxSizing: 'border-box',
-};
-const btn: React.CSSProperties = {
-  padding: '10px 20px', background: '#1a1a2e', color: '#fff', border: 'none',
-  borderRadius: 6, fontSize: 14, fontWeight: 600, cursor: 'pointer',
-};

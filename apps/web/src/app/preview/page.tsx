@@ -3,29 +3,37 @@ import { useState } from 'react';
 
 export default function PreviewPage() {
   const [html, setHtml] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [profileId, setProfileId] = useState('profile-1');
 
   const loadPreview = async () => {
-    const res = await fetch('/api/v1/candidates/profile-1/render', {
+    setLoading(true);
+    const res = await fetch(`/api/v1/candidates/${profileId}/render`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
     });
     if (res.ok) setHtml(await res.text());
+    setLoading(false);
   };
 
   return (
     <div>
-      <h1 style={h1}>Preview</h1>
-      <button onClick={loadPreview} style={btn}>Load Preview</button>
+      <h1 className="text-2xl font-bold text-slate-900">Preview</h1>
+      <p className="mt-1 text-sm text-slate-500">Preview your resume as rendered HTML</p>
+
+      <div className="mt-6 flex items-center gap-3">
+        <input value={profileId} onChange={e => setProfileId(e.target.value)}
+          placeholder="Profile ID" className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none w-64" />
+        <button onClick={loadPreview} disabled={loading}
+          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50 transition-opacity">
+          {loading ? 'Loading...' : 'Load Preview'}
+        </button>
+      </div>
+
       {html && (
-        <div style={{ marginTop: 16, background: '#fff', borderRadius: 8, border: '1px solid #e0e0e0', overflow: 'hidden' }}>
-          <iframe srcDoc={html} style={{ width: '100%', height: 800, border: 'none' }} title="Resume Preview" />
+        <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <iframe srcDoc={html} className="h-[800px] w-full" title="Resume Preview" />
         </div>
       )}
     </div>
   );
 }
-
-const h1: React.CSSProperties = { fontSize: 24, fontWeight: 700, margin: '0 0 20px' };
-const btn: React.CSSProperties = {
-  padding: '10px 20px', background: '#1a1a2e', color: '#fff', border: 'none',
-  borderRadius: 6, fontSize: 14, fontWeight: 600, cursor: 'pointer',
-};

@@ -1,41 +1,44 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 export default function UploadPage() {
+  const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleUpload = async () => {
+    if (!file) return;
     setUploading(true);
-    setResult('Upload endpoint requires Document Intelligence configuration. Coming soon.');
+    setResult('Upload endpoint configured — needs Azure Document Intelligence + Blob Storage to process.');
     setUploading(false);
   };
 
   return (
     <div>
-      <h1 style={h1}>Upload Resume</h1>
-      <form onSubmit={handleUpload} style={{ background: '#fff', borderRadius: 8, padding: 24, border: '1px solid #e0e0e0' }}>
-        <div style={dropzone}>
-          <p style={{ margin: 0, fontSize: 14, color: '#666' }}>Drag & drop your resume (PDF or DOCX)</p>
-          <p style={{ margin: '8px 0', fontSize: 12, color: '#999' }}>or</p>
-          <input type="file" accept=".pdf,.docx" style={{ fontSize: 13 }} />
+      <h1 className="text-2xl font-bold text-slate-900">Upload Resume</h1>
+      <p className="mt-1 text-sm text-slate-500">Upload a PDF or DOCX to extract career facts</p>
+
+      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6">
+        <div
+          onClick={() => inputRef.current?.click()}
+          className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-12 transition-colors hover:border-slate-400">
+          <div className="text-4xl">📄</div>
+          <p className="mt-3 text-sm font-medium text-slate-700">
+            {file ? file.name : 'Click to select a PDF or DOCX'}
+          </p>
+          <p className="mt-1 text-xs text-slate-400">Max 10MB</p>
+          <input ref={inputRef} type="file" accept=".pdf,.docx" className="hidden"
+            onChange={e => setFile(e.target.files?.[0] ?? null)} />
         </div>
-        <button type="submit" disabled={uploading} style={{ ...btn, opacity: uploading ? 0.6 : 1 }}>
-          {uploading ? 'Uploading...' : 'Upload'}
+
+        <button onClick={handleUpload} disabled={!file || uploading}
+          className="mt-4 rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50 transition-opacity">
+          {uploading ? 'Uploading...' : 'Upload & Extract'}
         </button>
-        {result && <p style={{ marginTop: 12, fontSize: 14, color: '#333' }}>{result}</p>}
-      </form>
+
+        {result && <p className="mt-3 text-sm text-slate-600">{result}</p>}
+      </div>
     </div>
   );
 }
-
-const h1: React.CSSProperties = { fontSize: 24, fontWeight: 700, margin: '0 0 20px' };
-const dropzone: React.CSSProperties = {
-  border: '2px dashed #ccc', borderRadius: 8, padding: 40, textAlign: 'center',
-  marginBottom: 16, background: '#fafafa',
-};
-const btn: React.CSSProperties = {
-  padding: '10px 20px', background: '#1a1a2e', color: '#fff', border: 'none',
-  borderRadius: 6, fontSize: 14, fontWeight: 600, cursor: 'pointer',
-};
