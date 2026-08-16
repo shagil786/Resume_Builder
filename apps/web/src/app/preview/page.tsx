@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { api } from '../../lib/api';
 
 export default function PreviewPage() {
   const [html, setHtml] = useState<string | null>(null);
@@ -8,11 +9,12 @@ export default function PreviewPage() {
 
   const loadPreview = async () => {
     setLoading(true);
-    const res = await fetch(`/api/v1/candidates/${profileId}/render`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
-    });
-    if (res.ok) setHtml(await res.text());
-    setLoading(false);
+    try {
+      const rendered = await api.render(profileId);
+      if (rendered) setHtml(rendered);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

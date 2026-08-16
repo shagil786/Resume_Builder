@@ -68,5 +68,8 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(typeof window !== 'undefined' && window.localStorage.getItem('resume_builder_token') ? { Authorization: `Bearer ${window.localStorage.getItem('resume_builder_token')}` } : {}) },
       body: JSON.stringify({ templateId }),
-    }).then(r => r.text()),
+    }).then(async response => {
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.text();
+    }),
 };

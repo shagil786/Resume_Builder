@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { api } from '../../lib/api';
 
 interface Template { id: string; name: string; description: string; category: string; }
 
@@ -8,10 +9,11 @@ export default function TemplatesPage() {
   const [selected, setSelected] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/v1/candidates/templates')
-      .then(r => r.json())
-      .then(d => setTemplates(d.templates ?? []))
-      .catch(() => {});
+    let active = true;
+    api.templates.list().then(response => {
+      if (active && response.data) setTemplates(response.data.templates);
+    });
+    return () => { active = false; };
   }, []);
 
   return (
