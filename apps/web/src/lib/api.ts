@@ -5,6 +5,18 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
+function errorMessage(body: unknown, fallback: string): string {
+  if (!body || typeof body !== 'object') return fallback;
+  const value = body as { error?: unknown; message?: unknown };
+  if (typeof value.message === 'string') return value.message;
+  if (typeof value.error === 'string') return value.error;
+  if (value.error && typeof value.error === 'object' && 'message' in value.error) {
+    const message = (value.error as { message?: unknown }).message;
+    if (typeof message === 'string') return message;
+  }
+  return fallback;
+}
+
 export interface CandidateProfileResponse {
   id: string;
   personalInfo: {
@@ -37,7 +49,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<ApiRespo
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      return { error: body.error ?? body.message ?? `HTTP ${res.status}` };
+      return { error: errorMessage(body, `HTTP ${res.status}`) };
     }
     if (res.status === 204) return {};
     const data = await res.json();
@@ -87,7 +99,7 @@ export const api = {
       form.append('file', file);
       const res = await fetch(`${API_BASE}/candidates/${id}/documents`, { method: 'POST', body: form, credentials: 'include' });
       const data = await res.json().catch(() => ({}));
-      return res.ok ? { data } : { error: data.error ?? `HTTP ${res.status}` };
+      return res.ok ? { data } : { error: errorMessage(data, `HTTP ${res.status}`) };
     },
   },
   templates: {
