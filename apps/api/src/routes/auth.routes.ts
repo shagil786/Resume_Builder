@@ -26,7 +26,9 @@ export async function authRoutes(app: FastifyInstance, db?: DB) {
   const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax' as const,
+    // The local frontend and Azure API are different sites. Production HTTPS
+    // therefore needs SameSite=None so the browser sends this cookie on XHR.
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
     path: '/',
     maxAge: 60 * 60,
   };
