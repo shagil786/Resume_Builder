@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { api } from '../../lib/api';
 
 const navItems = [
   { href: '/dashboard', label: 'Workspace' },
@@ -18,7 +20,20 @@ function isActive(pathname: string, href: string) {
 
 export function AppNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+
+  useEffect(() => {
+    api.auth.me().then(result => setAuthenticated(Boolean(result.data))).catch(() => setAuthenticated(false));
+  }, []);
+
+  const signOut = async () => {
+    await api.auth.logout();
+    setAuthenticated(false);
+    setOpen(false);
+    router.push('/');
+  };
 
   return (
     <>
@@ -33,6 +48,7 @@ export function AppNav() {
 
       <div className="hidden items-center gap-3 lg:flex">
         <Link href="/upload" className="mr-2 text-[13px] font-semibold text-[#64736f] transition hover:text-[#0d6b62]">Upload resume</Link>
+        {authenticated && <button type="button" onClick={() => void signOut()} className="btn btn-quiet min-h-[40px] px-3 text-[13px]">Sign out</button>}
         <Link href="/job" className="btn btn-primary min-h-[40px]">Build a resume</Link>
       </div>
 
@@ -48,7 +64,7 @@ export function AppNav() {
         <nav aria-label="Mobile navigation" className="grid gap-1">
           {navItems.map(item => <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className={`rounded-md px-3 py-2.5 text-sm font-semibold ${isActive(pathname, item.href) ? 'bg-[#e3f2ef] text-[#09564f]' : 'text-[#32433e] hover:bg-[#f3f7f6]'}`}>{item.label}</Link>)}
           <Link href="/upload" onClick={() => setOpen(false)} className="rounded-md px-3 py-2.5 text-sm font-semibold text-[#32433e] hover:bg-[#f3f7f6]">Upload resume</Link>
-          <Link href="/login" onClick={() => setOpen(false)} className="rounded-md px-3 py-2.5 text-sm font-semibold text-[#32433e] hover:bg-[#f3f7f6]">Account</Link>
+          {authenticated ? <button type="button" onClick={() => void signOut()} className="rounded-md px-3 py-2.5 text-left text-sm font-semibold text-[#32433e] hover:bg-[#f3f7f6]">Sign out</button> : <Link href="/login" onClick={() => setOpen(false)} className="rounded-md px-3 py-2.5 text-sm font-semibold text-[#32433e] hover:bg-[#f3f7f6]">Account</Link>}
         </nav>
       </div>}
     </>
