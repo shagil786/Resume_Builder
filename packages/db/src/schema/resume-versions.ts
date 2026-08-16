@@ -1,6 +1,5 @@
 import { pgTable, uuid, text, timestamp, pgEnum, integer, jsonb } from 'drizzle-orm/pg-core';
 import { candidateProfiles } from './candidate-profiles';
-import { resumeTemplates } from './resume-templates';
 import { jobs } from './jobs';
 
 export const resumeVersionStatus = pgEnum('resume_version_status', ['DRAFT', 'GENERATED', 'FINALIZED', 'ARCHIVED']);
@@ -8,7 +7,7 @@ export const resumeVersionStatus = pgEnum('resume_version_status', ['DRAFT', 'GE
 export const resumeVersions = pgTable('resume_versions', {
   id: uuid('id').primaryKey().defaultRandom(),
   profileId: uuid('profile_id').notNull().references(() => candidateProfiles.id),
-  templateId: uuid('template_id').notNull().references(() => resumeTemplates.id),
+  templateId: text('template_id').notNull(),
   jobId: uuid('job_id').references(() => jobs.id),
   versionNumber: integer('version_number').notNull(),
   structuredData: jsonb('structured_data').notNull(),

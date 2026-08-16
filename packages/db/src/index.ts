@@ -8,6 +8,8 @@ export { createUserRepository } from './repositories/user.repository';
 export type { IUserRepository, UserRecord } from './repositories/user.repository';
 export { createGenerationRunRepository } from './repositories/generation-run.repository';
 export type { IGenerationRunRepository } from './repositories/generation-run.repository';
+export { createResumeVersionRepository } from './repositories/resume-version.repository';
+export type { IResumeVersionRepository } from './repositories/resume-version.repository';
 export type { IUnitOfWork } from './repositories/unit-of-work';
 
 export { createCandidateProfileRepository } from './repositories/candidate-profile.repository';

@@ -1,4 +1,4 @@
-import type { CandidateProfile, CandidateFact, Job, GenerationRun } from '@resume-builder/domain';
+import type { CandidateProfile, CandidateFact, Job, GenerationRun, ResumeVersion } from '@resume-builder/domain';
 import { createLLMClient, createAzureOpenAIClient, ResumeOrchestrator } from '@resume-builder/ai';
 import type { OrchestrationResult, LLMClient } from '@resume-builder/ai';
 import type { ApplicationConfig } from '@resume-builder/config';
@@ -36,7 +36,25 @@ export class GenerationService {
     const result = await this.orchestrator.generateResume(profile, job, facts, templateId, language);
     this.runs.set(result.run.id, result.run);
     this.results.set(result.run.id, result);
-    if (this.db) await createUnitOfWork(this.db).generationRuns.create(result.run);
+    if (this.db) {
+      const uow = createUnitOfWork(this.db);
+      await uow.generationRuns.create(result.run);
+      if (result.run.status === 'COMPLETED') {
+        const previous = await uow.resumeVersions.findByProfileId(profile.id);
+        const version: ResumeVersion = {
+          id: crypto.randomUUID(),
+          profileId: profile.id,
+          templateId,
+          versionNumber: (previous[0]?.versionNumber ?? 0) + 1,
+          structuredData: result.resume,
+          status: 'GENERATED',
+          generationRunId: result.run.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        await uow.resumeVersions.create(version);
+      }
+    }
     return result;
   }
 
@@ -45,7 +63,18 @@ export class GenerationService {
   }
 
   async getResult(runId: string): Promise<OrchestrationResult | null> {
-    return this.results.get(runId) ?? null;
+    const cached = this.results.get(runId);
+    if (cached) return cached;
+    if (!this.db) return null;
+    const run = await this.getRun(runId);
+    const version = await createUnitOfWork(this.db).resumeVersions.findByGenerationRunId(runId);
+    if (!run || !version) return null;
+    return {
+      run,
+      resume: version.structuredData,
+      factCheck: { valid: true, issues: [] },
+      matchEvaluation: null,
+    };
   }
 
   async listRuns(profileId: string): Promise<GenerationRun[]> {
