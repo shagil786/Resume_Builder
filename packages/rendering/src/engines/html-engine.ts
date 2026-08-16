@@ -4,6 +4,12 @@ import type { TemplateDefinition } from '../templates';
 export class HtmlRenderEngine {
   render(content: ResumeContent, template: TemplateDefinition): string {
     const t = template;
+    const header = content.header ? `
+      <header class="resume-header">
+        <h1>${this.escapeHtml(content.header.name)}</h1>
+        ${content.header.headline ? `<div class="headline">${this.escapeHtml(content.header.headline)}</div>` : ''}
+        ${content.header.contact.length > 0 ? `<div class="contact">${content.header.contact.map(this.escapeHtml).join(' <span class="contact-separator">|</span> ')}</div>` : ''}
+      </header>` : '';
     const sections = content.sections
       .sort((a, b) => a.order - b.order)
       .map(s => this.renderSection(s, t))
@@ -18,8 +24,9 @@ export class HtmlRenderEngine {
     ${this.styles(t)}
   </style>
 </head>
-<body>
+  <body>
   <div class="resume">
+    ${header}
     ${sections}
   </div>
 </body>
@@ -35,14 +42,22 @@ export class HtmlRenderEngine {
 
         return `
           <div class="item">
-            <div class="item-header">${this.escapeHtml(item.content)}</div>
+            <div class="item-header">
+              <span class="item-primary">${this.escapeHtml(item.content)}</span>
+              ${item.meta ? `<span class="item-meta">${this.escapeHtml(item.meta)}</span>` : ''}
+            </div>
+            ${item.subtitle ? `<div class="item-subtitle">${this.escapeHtml(item.subtitle)}</div>` : ''}
             <ul class="bullets">${bullets}</ul>
           </div>`;
       }
 
       return `
         <div class="item">
-          <div class="item-content">${this.escapeHtml(item.content)}</div>
+          <div class="item-header">
+            <span class="item-primary">${this.escapeHtml(item.content)}</span>
+            ${item.meta ? `<span class="item-meta">${this.escapeHtml(item.meta)}</span>` : ''}
+          </div>
+          ${item.subtitle ? `<div class="item-subtitle">${this.escapeHtml(item.subtitle)}</div>` : ''}
         </div>`;
     }).join('\n');
 
@@ -56,6 +71,7 @@ export class HtmlRenderEngine {
   private styles(t: TemplateDefinition): string {
     const p = t.page;
     return `
+      @page { size: Letter; margin: 0; }
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body {
         width: ${p.width}px;
@@ -64,43 +80,73 @@ export class HtmlRenderEngine {
         font-size: ${t.typography.body.size}px;
         color: ${t.typography.body.color};
         line-height: ${t.typography.body.lineHeight};
-        padding: ${p.margins.top}px ${p.margins.right}px ${p.margins.bottom}px ${p.margins.left}px;
+        padding: 38px 48px 42px;
         background: ${t.colors.background};
       }
       .resume { width: 100%; }
-      .section { margin-bottom: 16px; }
+      .resume-header { text-align: center; margin-bottom: 18px; }
+      .resume-header h1 {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 25px;
+        line-height: 1.15;
+        font-weight: 700;
+        color: #111;
+        margin-bottom: 5px;
+      }
+      .headline { font-size: 11px; font-weight: 600; color: #222; margin-bottom: 4px; }
+      .contact { font-size: 9px; line-height: 1.5; color: #222; overflow-wrap: anywhere; }
+      .contact-separator { color: #555; padding: 0 3px; }
+      .section { margin-bottom: 13px; }
       .section-title {
-        font-family: ${t.typography.sectionTitle.family};
-        font-size: ${t.typography.sectionTitle.size}px;
-        font-weight: ${t.typography.sectionTitle.weight};
-        color: ${t.typography.sectionTitle.color};
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        padding-bottom: 4px;
-        margin-bottom: 8px;
-        border-bottom: 1px solid ${t.colors.divider};
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        color: #111;
+        padding-bottom: 3px;
+        margin-bottom: 7px;
+        border-bottom: 1px solid #222;
       }
-      .item { margin-bottom: 8px; }
+      .item { margin-bottom: 8px; page-break-inside: avoid; }
       .item-header {
-        font-family: ${t.typography.heading.family};
-        font-size: ${t.typography.heading.size}px;
-        font-weight: ${t.typography.heading.weight};
-        color: ${t.typography.heading.color};
-        margin-bottom: 2px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 10.5px;
+        line-height: 1.25;
+        color: #111;
+        font-weight: 700;
       }
+      .item-primary { min-width: 0; }
+      .item-meta { text-align: right; white-space: nowrap; }
+      .item-subtitle { font-size: 10.5px; font-style: italic; line-height: 1.25; color: #222; margin-top: 1px; }
+      .item-content { font-size: 10px; color: #222; }
+      .section-summary .item-content { line-height: 1.3; }
+      .section-skills .item-content { line-height: 1.35; }
+      .section-education .item { margin-bottom: 5px; }
+      .section-project .item { margin-bottom: 7px; }
+      .section-experience .item { margin-bottom: 9px; }
+      .section-experience .item-subtitle { margin-bottom: 1px; }
+      .section-experience .item-meta { font-weight: 700; }
+      .section-content { width: 100%; }
+      .section-content a { color: inherit; text-decoration: underline; }
+      .section-content strong { font-weight: 700; }
+      .section-content em { font-style: italic; }
       .item-content {
-        font-size: ${t.typography.body.size}px;
-        color: ${t.typography.body.color};
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 10px;
+        line-height: 1.35;
       }
       .bullets {
-        list-style: disc;
-        padding-left: 18px;
+        list-style: disc outside;
+        padding-left: 16px;
         margin-top: 2px;
       }
       .bullet {
-        font-size: ${t.typography.bullet.size}px;
-        color: ${t.typography.bullet.color};
-        line-height: ${t.typography.bullet.lineHeight};
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 9.5px;
+        color: #222;
+        line-height: 1.28;
         margin-bottom: 2px;
       }
     `;
