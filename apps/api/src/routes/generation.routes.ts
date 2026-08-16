@@ -42,8 +42,21 @@ export async function generationRoutes(app: FastifyInstance, profileService: ICa
 
       const factsResult = await profileService.searchFacts(request.params.profileId, '');
       const facts: CandidateFact[] = factsResult.facts;
-      const result = await generationService.generate(profile, job, facts, request.body.templateId ?? 'modern-professional', request.body.language);
-      return result;
+      try {
+        const result = await generationService.generate(profile, job, facts, request.body.templateId ?? 'modern-professional', request.body.language);
+        return result;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : '';
+        const status = message.match(/Azure OpenAI API error: (\d{3})/)?.[1];
+        reply.status(502).send({
+          error: {
+            code: 'RESUME_GENERATION_FAILED',
+            message: status ? `Azure OpenAI request failed (HTTP ${status})` : 'Azure OpenAI generation failed',
+            statusCode: 502,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      }
     }
   );
 
