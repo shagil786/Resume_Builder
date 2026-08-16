@@ -82,7 +82,11 @@ For each claim in the resume, classify it as:
 - UNSUPPORTED: No evidence supports this claim
 - CONTRADICTORY: The claim contradicts evidence
 
-Output a validation result with any issues found. Critical severity issues mean the claim must be removed or regenerated.`,
+Output a validation result with any issues found. Critical severity issues mean the claim must be removed or regenerated.
+
+Return only a JSON object with exactly these fields:
+- valid: boolean
+- issues: array of objects, each containing claim, reason, severity, and classification. Use an empty array when there are no issues.`,
 });
 
 registerPrompt('match-evaluator-system', {
@@ -101,7 +105,10 @@ Score dimensions separately (0-100%):
 
 Then provide an overall match score.
 
-Be objective. Only give credit for evidence-supported claims.`,
+Be objective. Only give credit for evidence-supported claims.
+
+Return only a JSON object with exactly these numeric fields:
+technical_skills, responsibilities, seniority, domain_knowledge, keyword_coverage, education, overall_match.`,
 });
 
 registerPrompt('cover-letter-writer-system', {
