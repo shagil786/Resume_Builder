@@ -12,12 +12,12 @@ export default function HomePage() {
             <Link href="/login" className="btn btn-primary">Start with your resume <span aria-hidden>→</span></Link>
             <Link href="/templates" className="btn btn-secondary">Explore templates</Link>
           </div>
-          <p className="mt-4 text-xs font-medium text-[#8b9995]">PDF and DOCX supported · Your facts remain reviewable</p>
+          <p className="mt-4 text-xs font-medium text-[#64736f]">PDF and DOCX supported · Your facts remain reviewable</p>
         </div>
         <div className="surface overflow-hidden bg-[#14231f] p-3 sm:p-4">
           <div className="rounded-[14px] bg-white p-5 sm:p-7">
             <div className="flex items-start justify-between gap-4 border-b border-[#e6ece9] pb-5">
-              <div><p className="eyebrow">Resume workspace</p><p className="mt-2 text-xl font-bold tracking-tight text-[#17211f]">Product Designer <span className="font-normal text-[#8b9995]">· v3</span></p></div>
+              <div><p className="eyebrow">Resume workspace</p><p className="mt-2 text-xl font-bold tracking-tight text-[#17211f]">Product Designer <span className="font-normal text-[#64736f]">· v3</span></p></div>
               <span className="shrink-0 rounded-md bg-[#e3f2ef] px-2.5 py-1.5 text-[11px] font-bold text-[#09564f]">Ready to review</span>
             </div>
             <div className="mt-6 space-y-3">

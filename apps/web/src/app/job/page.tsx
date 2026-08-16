@@ -56,7 +56,7 @@ export default function JobPage() {
           <label className="field-label">Target title<input required value={title} onChange={e => setTitle(e.target.value)} className="field-control" /></label>
         </div>
         <div>
-          <label className="field-label">Job posting URL <span className="font-normal text-[#8b9995]">(optional reference)</span></label>
+          <label className="field-label">Job posting URL <span className="font-normal text-[#64736f]">(optional reference)</span></label>
           <input value={url} onChange={e => setUrl(e.target.value)}
             placeholder="https://company.com/jobs/..."
             className="field-control" />
@@ -68,7 +68,7 @@ export default function JobPage() {
             <div className="w-full border-t border-slate-200" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="bg-white px-2 text-xs font-semibold uppercase tracking-[.12em] text-[#8b9995]">or paste the description</span>
+            <span className="bg-white px-2 text-xs font-semibold uppercase tracking-[.12em] text-[#64736f]">or paste the description</span>
           </div>
         </div>
 
@@ -77,7 +77,7 @@ export default function JobPage() {
           <textarea id="job-description" value={text} onChange={e => setText(e.target.value)} rows={8}
             placeholder="Paste the full job description here..."
             className="field-control min-h-44 resize-y" />
-          <div className="mt-2 flex justify-between gap-3 text-xs text-[#8b9995]"><span>Include responsibilities and requirements for a stronger match.</span><span>{text.length} characters</span></div>
+          <div className="mt-2 flex justify-between gap-3 text-xs text-[#64736f]"><span>Include responsibilities and requirements for a stronger match.</span><span>{text.length} characters</span></div>
         </div>
 
         <button type="submit" disabled={generating}

@@ -48,7 +48,7 @@ export default function UploadPage() {
           <p className="mt-4 text-sm font-bold text-[#32433e]">
             {file ? file.name : 'Choose a PDF or DOCX'}
           </p>
-          <p className="mt-2 text-xs text-[#8b9995]">PDF or DOCX · maximum 10MB</p>
+          <p className="mt-2 text-xs text-[#64736f]">PDF or DOCX · maximum 10MB</p>
           <input ref={inputRef} type="file" accept=".pdf,.docx" className="hidden" aria-label="Resume file"
             onChange={e => selectFile(e.target.files?.[0])} />
         </div>
