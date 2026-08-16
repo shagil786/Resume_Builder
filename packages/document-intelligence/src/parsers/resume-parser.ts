@@ -61,7 +61,7 @@ export function extractFacts(
   const summary = extractSummary(doc.content, doc.paragraphs);
   const facts: CandidateFact[] = [];
 
-  const sections = doc.document.sections;
+  const sections = doc.sections;
 
   for (const section of sections) {
     const normalizedTitle = section.title.toLowerCase().trim();

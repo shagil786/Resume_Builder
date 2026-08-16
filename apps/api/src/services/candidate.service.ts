@@ -1,5 +1,6 @@
 import type { CandidateProfile, CandidateFact, FactProvenance, PersonalInfo, WorkExperience, ProjectEntry, Skill, EducationEntry, Certification } from '@resume-builder/domain';
-import type { ICandidateProfileService } from './candidate.interface';
+import { AppError } from '@resume-builder/shared';
+import type { ICandidateProfileService } from './candidate.interface.js';
 
 export class CandidateProfileService implements ICandidateProfileService {
   private profiles = new Map<string, CandidateProfile>();
@@ -89,14 +90,5 @@ export class CandidateProfileService implements ICandidateProfileService {
 
   async getFactProvenance(_factId: string): Promise<FactProvenance | null> {
     return null;
-  }
-}
-
-class AppError extends Error {
-  public readonly code: string;
-  constructor(code: string, message: string) {
-    super(message);
-    this.name = 'AppError';
-    this.code = code;
   }
 }

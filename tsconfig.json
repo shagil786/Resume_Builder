@@ -14,5 +14,5 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["packages/domain/src", "api/candidate"]
+  "include": ["packages/domain/src"]
 }

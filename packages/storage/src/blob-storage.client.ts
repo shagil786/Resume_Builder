@@ -27,22 +27,6 @@ export function createBlobStorageClient(config: StorageClientConfig, logger?: Lo
   const log = logger ?? new ConsoleLogger('blob-storage');
   const baseUrl = `https://${config.accountName}.blob.core.windows.net`;
 
-  async function buildAuthHeaders(verb: string, url: string, contentLength: string, contentType: string): Promise<HeadersInit> {
-    const now = new Date().toUTCString();
-    const stringToSign = `${verb}\n\n\n${contentLength}\n\n${contentType}\n\n\n\n\n\n\nx-ms-date:${now}\nx-ms-version:2024-08-04\n/${config.accountName}${new URL(url).pathname}`;
-
-    const key = Uint8Array.from(atob(config.accountKey), c => c.charCodeAt(0));
-    const cryptoKey = crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-    const signature = crypto.subtle.sign('HMAC', await cryptoKey, new TextEncoder().encode(stringToSign));
-    const encoded = btoa(String.fromCharCode(...new Uint8Array(await signature)));
-
-    return {
-      'x-ms-date': now,
-      'x-ms-version': '2024-08-04',
-      Authorization: `SharedKey ${config.accountName}:${encoded}`,
-    };
-  }
-
   return {
     async upload(container: string, blobName: string, data: ArrayBuffer, options?: UploadOptions): Promise<string> {
       const url = `${baseUrl}/${container}/${encodeURIComponent(blobName)}`;
@@ -150,8 +134,8 @@ export function createBlobStorageClient(config: StorageClientConfig, logger?: Lo
       const stringToSign = `r\n${now.toISOString().replace(/\.\d{3}Z/, 'Z')}\n${expiry.toISOString().replace(/\.\d{3}Z/, 'Z')}\n/blob/${config.accountName}/${container}/${encodeURIComponent(blobName)}\n\n\n\n\n\n\n\n\n\n\n\n\nx-ms-version:2024-08-04`;
 
       const key = Uint8Array.from(atob(config.accountKey), c => c.charCodeAt(0));
-      const cryptoKey = crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-      const signature = crypto.subtle.sign('HMAC', await cryptoKey, new TextEncoder().encode(stringToSign));
+      const cryptoKey = await crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+      const signature = await crypto.subtle.sign('HMAC', cryptoKey, new TextEncoder().encode(stringToSign));
       const encoded = encodeURIComponent(btoa(String.fromCharCode(...new Uint8Array(await signature))));
 
       const sasParams = `sv=2024-08-04&se=${encodeURIComponent(expiry.toISOString())}&sr=b&sp=r&sig=${encoded}`;
