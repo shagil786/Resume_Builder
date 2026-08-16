@@ -217,7 +217,7 @@ resume-builder/
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml                    # Lint, typecheck, test
-│       └── deploy.yml                # Deploy to Azure Container Apps
+│       └── deploy.yml                # Deploy to the existing Azure Function App
 │
 ├── packages.json                     # Root workspace config (Turborepo)
 ├── turbo.json                        # Turborepo pipeline config

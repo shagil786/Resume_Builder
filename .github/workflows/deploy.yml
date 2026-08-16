@@ -8,14 +8,12 @@ on:
       - '*.md'
 
 env:
-  AZURE_CONTAINER_REGISTRY: ${{ vars.ACR_NAME }}.azurecr.io
-  API_IMAGE: ${{ vars.ACR_NAME }}.azurecr.io/resume-builder/api:${{ github.sha }}
-  CONTAINER_APP_NAME: resume-builder-api
-  RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+  FUNCTION_APP_NAME: shagilnizami786-api
+  RESOURCE_GROUP: rg-shagilnizami786-1129
 
 jobs:
   build-and-deploy:
-    name: Build & Deploy to Azure Container Apps
+    name: Build & Deploy to Azure Function App
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,21 +37,29 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Log in to Azure Container Registry
-        run: az acr login --name ${{ vars.ACR_NAME }}
-
-      - name: Build and push API image
+      - name: Build Azure Functions package
         run: |
-          docker build -f deploy/Dockerfile.api -t ${{ env.API_IMAGE }} .
-          docker push ${{ env.API_IMAGE }}
+          npm run build:function -w @resume-builder/api
+          rm -rf .function-package function-package.zip
+          mkdir -p .function-package/dist
+          cp apps/api/dist/function.js .function-package/dist/function.js
+          cp deploy/function/host.json deploy/function/package.json .function-package/
+          (cd .function-package && zip -qr ../function-package.zip .)
 
-      - name: Deploy to Azure Container Apps
+      - name: Deploy to Azure Function App
         run: |
-          az containerapp update \
-            --name ${{ env.CONTAINER_APP_NAME }} \
+          az functionapp deployment source config-zip \
+            --name ${{ env.FUNCTION_APP_NAME }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
-            --image ${{ env.API_IMAGE }} \
-            --set-env-vars \
+            --src function-package.zip \
+            --build-remote true
+          az functionapp config appsettings set \
+            --name ${{ env.FUNCTION_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --settings \
+              FUNCTIONS_WORKER_RUNTIME=node \
+              FUNCTIONS_EXTENSION_VERSION=~4 \
+              WEBSITE_NODE_DEFAULT_VERSION=~22 \
               KEY_VAULT_URL=${{ vars.KEY_VAULT_URL }} \
               DATABASE_HOST=${{ vars.DATABASE_HOST }} \
               DATABASE_PORT=${{ vars.DATABASE_PORT }} \

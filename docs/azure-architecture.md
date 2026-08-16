@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the **Azure Cloud Platform** choices and configuration for the AI Resume Builder, focusing on **production-ready but pragmatically buildable** deployments.
+This document records the Azure services used by the AI Resume Builder and distinguishes the existing production resources from future platform options.
 
 ---
 
@@ -10,8 +10,8 @@ This document outlines the **Azure Cloud Platform** choices and configuration fo
 
 | Component | Azure Service | Purpose | Deployment Tier | Notes |
 |-----------|---------------|---------|-----------------|-------|
-| **Frontend** | Azure Container Apps (Dynamic) | Web app hosting | Dev/Staging/Prod | Leverages Azure AD auth, custom domains, managed identity |
-| **Backend API** | Azure Container Apps (Dynamic) | Fastify app | Dev/Staging/Prod | Runs candidate, job, resume, template APIs |
+| **Frontend** | Not provisioned by this repository | Web app hosting | External/managed separately | The repository contains the web client, but no Azure frontend resource was identified |
+| **Backend API** | Azure Function App `shagilnizami786-api` | Fastify app through an HTTP-trigger adapter | Production | Existing resource in `rg-shagilnizami786-1129`; uses managed identity and Key Vault references |
 | **Database** | Azure PostgreSQL Flexible Server | Production database | Prod | Encrypted, automated backups, read replicas planned |
 | **Vector Search** | Azure AI Search | Semantic retrieval | Prod | Custom indexes for candidate facts |
 | **Document Parsing** | Azure Document Intelligence | PDF/DOCX extraction | Prod | OCR + form recognition |
@@ -44,9 +44,9 @@ This document outlines the **Azure Cloud Platform** choices and configuration fo
 
 ### Managed Identity Flow
 ```
-Web App (Container Apps) 
+Web client (hosting managed separately)
    ↓ (Managed Identity)
-API (Container Apps)
+API (Azure Function App)
    ↓ (Managed Identity) 
    ├── PostgreSQL
    ├── AI Search
@@ -57,7 +57,7 @@ API (Container Apps)
 ```
 
 **Implementation Details**:
-- Container Apps automatically assigns managed identities to containers
+- The Function App uses its system-assigned managed identity
 - Azure RBAC controls which identities have access to which resources
 - Key Vault access policies gate secrets for services that need them
 - No secrets in code or configuration files (except defaults)
@@ -433,13 +433,9 @@ export enum FactMetrics {
 ```
 GitHub Actions
    ↓ (Build + Test)
-Azure Container Registry
-   ↓ (Deploy Images)
-Azure Container Apps
-   ↓ (Run Services)
-   ├── Dev Environment
-   ├── Staging Environment  
-   └── Production Environment
+Azure Function package
+   ↓ (Zip deploy)
+Azure Function App `shagilnizami786-api`
 ```
 
 ### Blue-Green Deployment
@@ -500,16 +496,15 @@ resource azContainerApps 'Microsoft.App/containerApps@2023-05-01' = {
 
 ## Migration Strategy
 
-### Lift-and-Shift
-1. **Containerize** all services using Docker
-2. **Push images** to Azure Container Registry
-3. **Create infrastructure** using Bicep templates
-4. **Deploy** using Azure CLI/ARM templates
-5. **Migrate data** using Azure Migrate
+### Existing-resource deployment
+1. **Build and test** the API and web workspace
+2. **Bundle** the Function HTTP adapter and runtime metadata
+3. **Zip deploy** to the existing Function App
+4. **Load secrets** through Key Vault references and managed identity
 
 ### Cutover Plan
 1. **Pre-migration**: Backup all PostgreSQL data
-2. **DNS switch**: Point domain to Container Apps
+2. **DNS switch**: Point the application domain to the selected frontend/API entrypoints
 3. **Health checks**: API endpoints, database connectivity
 4. **User testing**: Internal QA, beta testers
 5. **Rollout**: Gradual traffic increase over 2 hours
@@ -521,7 +516,7 @@ resource azContainerApps 'Microsoft.App/containerApps@2023-05-01' = {
 | Service | Monthly Cost | Notes |
 |---------|--------------|-------|
 | Azure PostgreSQL | $200-500 | Depends on usage |
-| Azure Container Apps | $100-300 | Autoscaling |
+| Azure Function App | Consumption/plan-based | Existing API host |
 | Azure AI Search | $50-150 | Query volume |
 | Azure OpenAI | $500-2000 | Token usage |
 | Blob Storage | $20-100 | File storage |

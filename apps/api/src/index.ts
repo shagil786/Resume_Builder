@@ -137,6 +137,8 @@ async function start() {
   }
 }
 
-start();
+if (!process.env.FUNCTIONS_WORKER_RUNTIME) {
+  start();
+}
 
 export { buildApp };

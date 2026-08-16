@@ -108,7 +108,7 @@ curl http://localhost:3001/health
 
 ### Azure Key Vault configuration
 
-The API loads all application secrets at startup through `DefaultAzureCredential` and `SecretClient`. Local development uses the Azure CLI identity from `az login`; Azure-hosted deployments use the App Service/Container Apps managed identity. Secret values must never be placed in `.env`, `.env.example`, source code, or deployment logs.
+The API loads all application secrets at startup through `DefaultAzureCredential` and `SecretClient`. Local development uses the Azure CLI identity from `az login`; the existing Azure Function App (`shagilnizami786-api`) uses its system-assigned managed identity. Secret values must never be placed in `.env`, `.env.example`, source code, or deployment logs.
 
 Set `KEY_VAULT_URL` and the non-secret settings listed in `.env.example`. The following Key Vault secret names are required:
 

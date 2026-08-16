@@ -24,7 +24,7 @@ test.describe('Web App', () => {
     }));
     await page.goto('/templates');
     await expect(page.locator('h1')).toContainText('Templates');
-    const count = await page.locator('button').count();
+    const count = await page.locator('main button').count();
     expect(count).toBe(3);
   });
 
