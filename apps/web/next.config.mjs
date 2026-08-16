@@ -7,10 +7,11 @@ const apiOrigin = (() => {
   }
 })();
 const connectSources = ["'self'", ...(apiOrigin ? [apiOrigin] : [])].join(' ');
+const scriptSources = ["'self'", "'unsafe-inline'", ...(process.env.NODE_ENV === 'development' ? ["'unsafe-eval'"] : [])].join(' ');
 const contentSecurityPolicy = [
   "default-src 'self'",
   `connect-src ${connectSources}`,
-  "script-src 'self' 'unsafe-inline'",
+  `script-src ${scriptSources}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
@@ -23,6 +24,9 @@ const contentSecurityPolicy = [
 ].join('; ');
 
 const nextConfig = {
+  // Playwright uses 127.0.0.1 while Next serves the dev app on localhost.
+  // Allow the test origin so client chunks and HMR can load during browser tests.
+  allowedDevOrigins: ['127.0.0.1'],
   async headers() {
     return [{
       source: '/(.*)',
