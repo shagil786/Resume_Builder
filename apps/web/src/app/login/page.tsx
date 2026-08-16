@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '../../lib/api';
 
-export default function LoginPage() {
+function LoginForm() {
   const [register, setRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -37,4 +37,8 @@ export default function LoginPage() {
     {message && <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{message}</p>}
     <button onClick={() => { setRegister(!register); setMessage(null); }} className="mt-5 text-sm font-medium text-slate-500 underline underline-offset-4">{register ? 'Already have an account? Sign in' : 'New here? Create an account'}</button></div>
   </div>;
+}
+
+export default function LoginPage() {
+  return <Suspense fallback={<div className="mx-auto max-w-4xl rounded-3xl border border-slate-200 bg-white p-10 text-sm text-slate-500">Loading sign in…</div>}><LoginForm /></Suspense>;
 }
