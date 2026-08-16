@@ -4,12 +4,13 @@ import { GenerationService } from '../services/generation.service.js';
 import type { CandidateFact } from '@resume-builder/domain';
 import type { ApplicationConfig } from '@resume-builder/config';
 import type { DB } from '@resume-builder/db';
-import { RenderingService } from '@resume-builder/rendering';
+import { PdfRenderEngine, RenderingService } from '@resume-builder/rendering';
 import { fetchJobDescription } from '../services/job-description-fetcher.js';
 
 export async function generationRoutes(app: FastifyInstance, profileService: ICandidateProfileService, azureOpenAI?: ApplicationConfig['azureOpenAI'], db?: DB) {
   const generationService = new GenerationService(azureOpenAI, db);
   const renderer = new RenderingService();
+  const pdfEngine = new PdfRenderEngine();
 
   app.post<{
     Params: { profileId: string };
@@ -65,6 +66,19 @@ export async function generationRoutes(app: FastifyInstance, profileService: ICa
     }
     reply.header('Content-Type', 'text/html');
     return renderer.render(result.resume, result.run.templateId).html;
+  });
+
+  app.get<{ Params: { profileId: string; runId: string } }>('/:profileId/generations/:runId/preview/pdf', async (request, reply) => {
+    const result = await generationService.getResult(request.params.runId);
+    if (!result || result.run.profileId !== request.params.profileId) {
+      reply.status(404).send({ error: 'Generated resume not found' });
+      return;
+    }
+    const html = renderer.render(result.resume, result.run.templateId).html;
+    const pdf = await pdfEngine.render(html);
+    reply.header('Content-Type', 'application/pdf');
+    reply.header('Content-Disposition', `attachment; filename="resume-${request.params.runId}.pdf"`);
+    return pdf;
   });
 
   app.get<{ Params: { profileId: string } }>('/:profileId/generations', async (request) => {

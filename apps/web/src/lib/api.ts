@@ -81,6 +81,7 @@ export const api = {
     generations: (id: string) => request<{ runs: { id: string; status: string; startedAt: string; completedAt?: string; templateId: string }[] }>(`/candidates/${id}/generations`),
     generation: (id: string, runId: string) => request<{ run: { id: string; status: string }; resume: { sections: unknown[]; metadata: Record<string, unknown> }; factCheck: { valid: boolean; issues: unknown[] } }>(`/candidates/${id}/generations/${runId}`),
     generationPreview: (id: string, runId: string) => fetch(`${API_BASE}/candidates/${id}/generations/${runId}/preview`, { credentials: 'include' }).then(async response => response.ok ? response.text() : null),
+    generationPreviewPdf: (id: string, runId: string) => fetch(`${API_BASE}/candidates/${id}/generations/${runId}/preview/pdf`, { credentials: 'include' }).then(async response => response.ok ? response.blob() : null),
     upload: async (id: string, file: File): Promise<ApiResponse<Record<string, unknown>>> => {
       const form = new FormData();
       form.append('file', file);
