@@ -49,6 +49,8 @@ export interface Page {
   lines: { content: string; confidence: number }[];
 }
 
+const DOCUMENT_INTELLIGENCE_API_VERSION = '2024-11-30';
+
 export interface AnalyzeResult {
   document: AnalyzedDocument;
   modelId: string;
@@ -64,7 +66,7 @@ export function createDocumentIntelligenceClient(config: DocumentIntelligenceCli
       log.info('Analyzing document', { mimeType, size: buffer.byteLength });
 
       const response = await fetch(
-        `${config.endpoint}/documentintelligence/documentModels/${modelId}:analyze?api-version=2024-02-29-preview`,
+        `${config.endpoint.replace(/\/$/, '')}/documentintelligence/documentModels/${modelId}:analyze?_overload=analyzeDocument&api-version=${DOCUMENT_INTELLIGENCE_API_VERSION}`,
         {
           method: 'POST',
           headers: {
@@ -91,7 +93,7 @@ export function createDocumentIntelligenceClient(config: DocumentIntelligenceCli
       log.info('Analyzing document from URL', { url });
 
       const response = await fetch(
-        `${config.endpoint}/documentintelligence/documentModels/${modelId}:analyze?api-version=2024-02-29-preview`,
+        `${config.endpoint.replace(/\/$/, '')}/documentintelligence/documentModels/${modelId}:analyze?_overload=analyzeDocument&api-version=${DOCUMENT_INTELLIGENCE_API_VERSION}`,
         {
           method: 'POST',
           headers: {
@@ -204,7 +206,7 @@ function transformResult(result: {
       pages,
     },
     modelId: 'prebuilt-layout',
-    apiVersion: '2024-02-29-preview',
+    apiVersion: DOCUMENT_INTELLIGENCE_API_VERSION,
   };
 }
 
