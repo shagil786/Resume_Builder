@@ -30,9 +30,9 @@ export interface CandidateProfileResponse {
 
 async function request<T>(path: string, options?: RequestInit): Promise<ApiResponse<T>> {
   try {
-    const token = typeof window !== 'undefined' ? window.localStorage.getItem('resume_builder_token') : null;
     const res = await fetch(`${API_BASE}${path}`, {
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
       ...options,
     });
     if (!res.ok) {
@@ -49,9 +49,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<ApiRespo
 
 export const api = {
   auth: {
-    register: (body: { email: string; password: string; name: string }) => request<{ token: string }>('/auth/register', { method: 'POST', body: JSON.stringify(body) }),
-    login: (body: { email: string; password: string }) => request<{ token: string }>('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
+    register: (body: { email: string; password: string; name: string }) => request<{ user: { email: string; name: string } }>('/auth/register', { method: 'POST', body: JSON.stringify(body) }),
+    login: (body: { email: string; password: string }) => request<{ user: { email: string; name: string } }>('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
     me: () => request<{ email: string; name: string }>('/auth/me'),
+    logout: () => request<{ status: string }>('/auth/logout', { method: 'POST' }),
   },
   candidates: {
     create: (body: { personalInfo: Record<string, unknown> }) =>
@@ -75,10 +76,9 @@ export const api = {
     generate: (id: string, body: { jobDescription: string; company: string; title: string; templateId?: string }) =>
       request<Record<string, unknown>>(`/candidates/${id}/generate`, { method: 'POST', body: JSON.stringify(body) }),
     upload: async (id: string, file: File): Promise<ApiResponse<Record<string, unknown>>> => {
-      const token = typeof window !== 'undefined' ? window.localStorage.getItem('resume_builder_token') : null;
       const form = new FormData();
       form.append('file', file);
-      const res = await fetch(`${API_BASE}/candidates/${id}/documents`, { method: 'POST', body: form, headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      const res = await fetch(`${API_BASE}/candidates/${id}/documents`, { method: 'POST', body: form, credentials: 'include' });
       const data = await res.json().catch(() => ({}));
       return res.ok ? { data } : { error: data.error ?? `HTTP ${res.status}` };
     },
@@ -90,7 +90,8 @@ export const api = {
   render: (profileId: string, templateId?: string) =>
     fetch(`${API_BASE}/candidates/${profileId}/render`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(typeof window !== 'undefined' && window.localStorage.getItem('resume_builder_token') ? { Authorization: `Bearer ${window.localStorage.getItem('resume_builder_token')}` } : {}) },
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ templateId }),
     }).then(async response => {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);

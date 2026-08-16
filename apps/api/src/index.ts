@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import cookie from '@fastify/cookie';
 import multipart from '@fastify/multipart';
 import rateLimit from '@fastify/rate-limit';
 import { createConnection, runMigrations } from '@resume-builder/db';
@@ -79,7 +80,8 @@ async function buildApp() {
     .split(',')
     .map(origin => origin.trim())
     .filter(Boolean);
-  await app.register(cors, { origin: corsOrigins.length > 0 ? corsOrigins : false });
+  await app.register(cors, { origin: corsOrigins.length > 0 ? corsOrigins : false, credentials: corsOrigins.length > 0 });
+  await app.register(cookie);
   await app.register(rateLimit, { global: false, skipOnError: true });
   await app.register(multipart, { limits: { files: 1, fileSize: 10 * 1024 * 1024 } });
   await app.register(authPlugin, { secret: config.jwtSecret });

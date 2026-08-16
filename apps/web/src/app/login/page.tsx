@@ -22,7 +22,7 @@ export default function LoginPage() {
       ? await api.auth.register({ email, password, name })
       : await api.auth.login({ email, password });
     if (result.error || !result.data) setMessage(result.error ?? 'Authentication failed');
-    else { window.localStorage.setItem('resume_builder_token', result.data.token); router.push(searchParams.get('next') || '/dashboard'); }
+    else router.push(searchParams.get('next') || '/dashboard');
     setLoading(false);
   }
 

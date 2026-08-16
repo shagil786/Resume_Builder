@@ -4,7 +4,7 @@ import { createTestApp } from './test-app.js';
 
 describe('Auth Flow', () => {
   let app: FastifyInstance;
-  let token = '';
+  let authCookie = '';
 
   beforeAll(async () => { app = await createTestApp(); });
   afterAll(async () => { await app.close(); });
@@ -13,12 +13,9 @@ describe('Auth Flow', () => {
     const res = await app.inject({ method: 'POST', url: '/api/v1/auth/register', payload: { email: 'auth-test@example.com', password: 'pass12345', name: 'Test User' } });
     expect(res.statusCode).toBe(201);
     const body = res.json();
-    expect(body.token).toBeDefined();
     expect(body.user.email).toBe('auth-test@example.com');
-    const payload = JSON.parse(Buffer.from(body.token.split('.')[1], 'base64url').toString()) as { exp?: number };
-    expect(payload.exp).toBeTypeOf('number');
-    expect(payload.exp!).toBeGreaterThan(Math.floor(Date.now() / 1000));
-    token = body.token;
+    authCookie = String(res.headers['set-cookie']).split(';')[0];
+    expect(authCookie).toMatch(/^resume_builder_token=/);
   });
 
   test('rejects duplicate email and wrong password', async () => {
@@ -31,8 +28,8 @@ describe('Auth Flow', () => {
   test('login and auth/me work with a valid token', async () => {
     const login = await app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: { email: 'auth-test@example.com', password: 'pass12345' } });
     expect(login.statusCode).toBe(200);
-    token = login.json().token;
-    const me = await app.inject({ method: 'GET', url: '/api/v1/auth/me', headers: { authorization: `Bearer ${token}` } });
+    authCookie = String(login.headers['set-cookie']).split(';')[0];
+    const me = await app.inject({ method: 'GET', url: '/api/v1/auth/me', headers: { cookie: authCookie } });
     expect(me.statusCode).toBe(200);
     expect(me.json().email).toBe('auth-test@example.com');
   });
@@ -47,6 +44,12 @@ describe('Auth Flow', () => {
     expect(login.statusCode).toBe(400);
     const register = await app.inject({ method: 'POST', url: '/api/v1/auth/register', payload: { email: 'new@example.com' } });
     expect(register.statusCode).toBe(400);
+  });
+
+  test('logout clears the authentication cookie', async () => {
+    const logout = await app.inject({ method: 'POST', url: '/api/v1/auth/logout', headers: { cookie: authCookie } });
+    expect(logout.statusCode).toBe(200);
+    expect(String(logout.headers['set-cookie'])).toContain('resume_builder_token=');
   });
 });
 

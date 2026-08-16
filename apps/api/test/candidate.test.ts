@@ -4,17 +4,17 @@ import { createTestApp } from './test-app.js';
 
 describe('Candidate API', () => {
   let app: FastifyInstance;
-  let token = '';
+  let authCookie = '';
   let profileId = '';
 
   beforeAll(async () => {
     app = await createTestApp();
     const auth = await app.inject({ method: 'POST', url: '/api/v1/auth/register', payload: { email: 'candidate-test@example.com', password: 'pass12345', name: 'Candidate' } });
-    token = auth.json().token;
+    authCookie = String(auth.headers['set-cookie']).split(';')[0];
   });
   afterAll(async () => { await app.close(); });
 
-  const authHeaders = () => ({ authorization: `Bearer ${token}` });
+  const authHeaders = () => ({ cookie: authCookie });
 
   test('creates and reads a profile owned by the authenticated user', async () => {
     const created = await app.inject({ method: 'POST', url: '/api/v1/candidates', headers: authHeaders(), payload: { userId: 'ignored', personalInfo: { firstName: 'John', lastName: 'Doe', piiFields: [] } } });
@@ -29,7 +29,7 @@ describe('Candidate API', () => {
     const missing = await app.inject({ method: 'GET', url: '/api/v1/candidates/missing-id', headers: authHeaders() });
     expect(missing.statusCode).toBe(404);
     const otherAuth = await app.inject({ method: 'POST', url: '/api/v1/auth/register', payload: { email: 'other-test@example.com', password: 'pass12345', name: 'Other' } });
-    const forbidden = await app.inject({ method: 'GET', url: `/api/v1/candidates/${profileId}`, headers: { authorization: `Bearer ${otherAuth.json().token}` } });
+    const forbidden = await app.inject({ method: 'GET', url: `/api/v1/candidates/${profileId}`, headers: { cookie: String(otherAuth.headers['set-cookie']).split(';')[0] } });
     expect(forbidden.statusCode).toBe(404);
   });
 
@@ -65,7 +65,7 @@ describe('Candidate API', () => {
     const forbidden = await app.inject({
       method: 'PATCH',
       url: `/api/v1/candidates/${profileId}/facts/${factId}/status`,
-      headers: { authorization: `Bearer ${otherAuth.json().token}` },
+      headers: { cookie: String(otherAuth.headers['set-cookie']).split(';')[0] },
       payload: { status: 'VERIFIED' },
     });
     expect(forbidden.statusCode).toBe(404);

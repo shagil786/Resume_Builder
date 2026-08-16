@@ -16,11 +16,19 @@ export interface AuthPluginOptions {
 }
 
 export default fp<AuthPluginOptions>(async (fastify: FastifyInstance, opts: AuthPluginOptions) => {
-  await fastify.register(jwt, { secret: opts.secret, sign: { expiresIn: '1h' } });
+  await fastify.register(jwt, {
+    secret: opts.secret,
+    sign: { expiresIn: '1h' },
+    cookie: { cookieName: 'resume_builder_token', signed: false },
+  });
 
   fastify.decorate('authenticate', async function (request: FastifyRequest, reply: FastifyReply) {
     try {
-      await request.jwtVerify();
+      if (request.cookies?.resume_builder_token) {
+        await request.jwtVerify({ onlyCookie: true });
+      } else {
+        await request.jwtVerify();
+      }
       request.userId = (request.user as { id: string }).id;
     } catch {
       reply.status(401).send({ error: 'Unauthorized' });

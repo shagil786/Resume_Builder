@@ -23,6 +23,13 @@ function verifyPassword(password: string, stored: string): boolean {
 
 export async function authRoutes(app: FastifyInstance, db?: DB) {
   const repository: IUserRepository | undefined = db ? createUserRepository(db) : undefined;
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: 60 * 60,
+  };
 
   async function findByEmail(email: string) {
     return repository?.findByEmail(email) ?? users.get(email) ?? null;
@@ -50,7 +57,8 @@ export async function authRoutes(app: FastifyInstance, db?: DB) {
         ? await repository.create({ email: email.trim(), name: name.trim(), passwordHash })
         : (() => { const value = { id: email.trim(), email: email.trim(), name: name.trim(), passwordHash }; users.set(email.trim(), value); return value; })();
       const token = await reply.jwtSign({ id: user.id, email: user.email, name: user.name });
-      reply.status(201).send({ token, user: { email, name } });
+      reply.setCookie('resume_builder_token', token, cookieOptions);
+      reply.status(201).send({ user: { email: user.email, name: user.name } });
     }
   );
 
@@ -70,7 +78,8 @@ export async function authRoutes(app: FastifyInstance, db?: DB) {
       }
       await repository?.touchLastLogin(user.id);
       const token = await reply.jwtSign({ id: user.id, email: user.email, name: user.name });
-      reply.send({ token, user: { email: user.email, name: user.name } });
+      reply.setCookie('resume_builder_token', token, cookieOptions);
+      reply.send({ user: { email: user.email, name: user.name } });
     }
   );
 
@@ -83,4 +92,9 @@ export async function authRoutes(app: FastifyInstance, db?: DB) {
       reply.send({ email: user.email, name: user.name });
     }
   );
+
+  app.post('/auth/logout', async (_request, reply) => {
+    reply.clearCookie('resume_builder_token', { path: '/' });
+    reply.send({ status: 'SIGNED_OUT' });
+  });
 }
