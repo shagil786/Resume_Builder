@@ -10,26 +10,38 @@ export default function JobPage() {
   const [company, setCompany] = useState('');
   const [title, setTitle] = useState('');
   const [generating, setGenerating] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ type: 'error' | 'info'; text: string } | null>(null);
   const router = useRouter();
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
+    setNotice(null);
+    if (text.trim().length < 40) {
+      setNotice({ type: 'error', text: 'Paste the full job description so we can make a useful match (at least 40 characters).' });
+      return;
+    }
     setGenerating(true);
     const profileId = window.localStorage.getItem('resume_builder_profile_id');
-    if (!profileId) setResult('Create a profile first.');
-    else {
-      const response = await api.candidates.generate(profileId, { jobDescription: text, company, title });
-      if (response.error) setResult(response.error);
+    if (!profileId) {
+      setNotice({ type: 'error', text: 'Create a profile before generating a tailored resume.' });
+      setGenerating(false);
+      return;
+    }
+    try {
+      const response = await api.candidates.generate(profileId, { jobDescription: text.trim(), company: company.trim(), title: title.trim() });
+      if (response.error) setNotice({ type: 'error', text: response.error });
       else {
         const runId = (response.data as { run?: { id?: string } } | undefined)?.run?.id;
         if (runId) {
           window.localStorage.setItem('resume_builder_generation_id', runId);
-          router.push('/preview');
-        } else setResult('Generation completed, but no preview was returned.');
+          router.push(`/preview?runId=${encodeURIComponent(runId)}`);
+        } else setNotice({ type: 'error', text: 'Generation finished, but no preview was returned. Please try again.' });
       }
+    } catch {
+      setNotice({ type: 'error', text: 'We could not generate this resume. Check your connection and try again.' });
+    } finally {
+      setGenerating(false);
     }
-    setGenerating(false);
   };
 
   return (
@@ -44,10 +56,11 @@ export default function JobPage() {
           <label className="field-label">Target title<input required value={title} onChange={e => setTitle(e.target.value)} className="field-control" /></label>
         </div>
         <div>
-          <label className="field-label">Job posting URL</label>
+          <label className="field-label">Job posting URL <span className="font-normal text-[#8b9995]">(optional reference)</span></label>
           <input value={url} onChange={e => setUrl(e.target.value)}
             placeholder="https://company.com/jobs/..."
             className="field-control" />
+          <p className="field-help">We don’t fetch URLs yet. Paste the job description below so it can be analyzed.</p>
         </div>
 
         <div className="relative">
@@ -60,18 +73,19 @@ export default function JobPage() {
         </div>
 
         <div>
-          <label className="field-label">Job description</label>
+          <label className="field-label">Job description <span className="text-[#b42318]">*</span></label>
           <textarea value={text} onChange={e => setText(e.target.value)} rows={8}
             placeholder="Paste the full job description here..."
-            className="field-control min-h-44 resize-y" />
+            required minLength={40} className="field-control min-h-44 resize-y" />
+          <div className="mt-2 flex justify-between gap-3 text-xs text-[#8b9995]"><span>Include responsibilities and requirements for a stronger match.</span><span>{text.length} characters</span></div>
         </div>
 
-        <button type="submit" disabled={generating || !text || !company || !title}
+        <button type="submit" disabled={generating}
           className="btn btn-primary disabled:cursor-not-allowed disabled:opacity-50">
-          {generating ? 'Generating...' : 'Generate Resume'}
+          {generating ? 'Matching facts and drafting…' : 'Generate tailored resume'}
         </button>
 
-        {result && <p role="status" className="status-info p-3 text-sm">{result}</p>}
+        {notice && <p role={notice.type === 'error' ? 'alert' : 'status'} className={`${notice.type === 'error' ? 'status-error' : 'status-info'} p-3 text-sm`}>{notice.text}</p>}
       </form>
     </div></AuthGuard>
   );
