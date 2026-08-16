@@ -1,7 +1,7 @@
 import type { LLMClient, LLMMessage, LLMClientConfig } from '../llm';
 import type { Logger } from '@resume-builder/shared';
 import { ConsoleLogger } from '@resume-builder/shared';
-import type { CandidateProfile, JobAnalysis, ResumeStrategy, ResumeContent, CandidateFact, ResumeSection } from '@resume-builder/domain';
+import type { CandidateProfile, Job, JobAnalysis, ResumeStrategy, ResumeContent, CandidateFact, ResumeSection } from '@resume-builder/domain';
 import { getPrompt } from '../prompts';
 import type { ResumeContentSchema } from '../schemas';
 
@@ -16,12 +16,12 @@ export class ResumeWriter {
     this.logger = logger ?? new ConsoleLogger('resume-writer');
   }
 
-  async write(profile: CandidateProfile, strategy: ResumeStrategy, jobAnalysis: JobAnalysis, facts: CandidateFact[], language?: string): Promise<ResumeContent> {
+  async write(profile: CandidateProfile, strategy: ResumeStrategy, job: Job, jobAnalysis: JobAnalysis, facts: CandidateFact[], language?: string): Promise<ResumeContent> {
     const systemPrompt = getPrompt('resume-writer-system');
     if (!systemPrompt) throw new Error('resume-writer-system prompt not registered');
 
-    const selectedFacts = facts.filter(f => strategy.selectedFacts.includes(f.id));
-    const factText = selectedFacts.map(f =>
+    const sourceFacts = facts.filter(f => f.status !== 'REJECTED');
+    const factText = sourceFacts.map(f =>
       `[${f.id}] (${f.category}) ${f.claim} — Source: ${f.sourceRef}`
     ).join('\n');
 
@@ -29,7 +29,10 @@ export class ResumeWriter {
 - Must-have skills: ${jobAnalysis.mustHaveSkills.map(skill => skill.skill).join(', ')}
 - Preferred skills: ${jobAnalysis.preferredSkills.map(skill => skill.skill).join(', ')}
 - Responsibilities: ${jobAnalysis.responsibilities.join('; ')}
-- Keywords: ${jobAnalysis.keywords.join(', ')}`;
+- Keywords: ${jobAnalysis.keywords.join(', ')}
+
+Full Job Description:
+${job.rawText}`;
 
     const messages: LLMMessage[] = [
       { role: 'system', content: systemPrompt.content },
@@ -46,14 +49,14 @@ Strategy:
 - Experience priority: ${strategy.experiencePriority.join(' > ')}
 - Section budget: ${JSON.stringify(strategy.sectionBudget)}
 
-Candidate Facts (use ONLY these):
+Candidate Facts (use ONLY these; preserve all relevant source history):
 ${factText}
 
-Generate a targeted resume for this job. Prioritize evidence that demonstrates the job requirements, mirror relevant terminology from the posting when supported by evidence, and omit unrelated profile content.`,
+Generate a targeted ATS resume for this job. Preserve every distinct employer, role, date range, and material accomplishment represented in the candidate facts; do not collapse the work history into one generic entry. Prioritize and order the most relevant evidence first, mirror job terminology only when supported by evidence, and omit only content unrelated to the target role. Use 3-6 accomplishment bullets per relevant employer and include older roles when they demonstrate transferable requirements.`,
       },
     ];
 
-    this.logger.info('Generating resume content', { targetRole: strategy.targetRole, selectedFacts: selectedFacts.length });
+    this.logger.info('Generating resume content', { targetRole: strategy.targetRole, selectedFacts: sourceFacts.length });
 
     const response = await this.client.complete(messages, this.config);
     const content = JSON.parse(response.content) as ResumeContentSchema;
