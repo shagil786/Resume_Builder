@@ -21,6 +21,11 @@ export class DbCandidateProfileService implements ICandidateProfileService {
     return createUnitOfWork(this.db).candidateProfiles.findById(profileId);
   }
 
+  async getProfileForUser(userId: string): Promise<CandidateProfile | null> {
+    const profiles = await createUnitOfWork(this.db).candidateProfiles.findByUserId(userId);
+    return profiles[0] ?? null;
+  }
+
   async updateProfile(profileId: string, data: Partial<CandidateProfile>): Promise<void> {
     await createUnitOfWork(this.db).candidateProfiles.update(profileId, data);
   }

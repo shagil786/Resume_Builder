@@ -41,6 +41,7 @@ async function mockAuthenticatedApi(page: Page) {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
       const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
       if (url.includes('/auth/me')) return json({ email: 'test@example.com', name: 'Test User' });
+      if (url.endsWith('/candidates')) return json({ id: 'profile-1', personalInfo: { firstName: 'Test', lastName: 'User', email: 'test@example.com', piiFields: [] }, workExperience: [], projects: [], skills: [], education: [], certifications: [], sourceDocuments: [], status: 'DRAFT' });
       if (url.includes('/candidates/profile-1/facts/search')) return json({ facts: [{ id: 'fact-1', claim: 'Reduced deployment time by 40%', context: 'Platform migration', category: 'ACHIEVEMENT', confidence: 0.94, status: 'EXTRACTED', sourceRef: 'resume.pdf' }], total: 1 });
       if (url.includes('/candidates/profile-1/facts/fact-1/status')) return json({ status: 'UPDATED' });
       if (url.endsWith('/candidates/profile-1/documents')) return json({ factCount: 4, status: 'PROCESSED' });

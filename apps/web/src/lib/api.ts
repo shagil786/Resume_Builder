@@ -55,6 +55,7 @@ export const api = {
     logout: () => request<{ status: string }>('/auth/logout', { method: 'POST' }),
   },
   candidates: {
+    current: () => request<CandidateProfileResponse>('/candidates'),
     create: (body: { personalInfo: Record<string, unknown> }) =>
       request<{ profileId: string }>('/candidates', { method: 'POST', body: JSON.stringify(body) }),
     get: (id: string) => request<CandidateProfileResponse>(`/candidates/${id}`),

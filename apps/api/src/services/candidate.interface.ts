@@ -23,6 +23,7 @@ export type CertificationInput = Omit<Certification, 'id' | 'profileId' | 'factI
 
 export interface ICandidateProfileService {
   createProfile(userId: string, personalInfo: PersonalInfo): Promise<{ profileId: string }>;
+  getProfileForUser(userId: string): Promise<CandidateProfile | null>;
   getProfile(profileId: string): Promise<CandidateProfile | null>;
   updateProfile(profileId: string, data: Partial<CandidateProfile>): Promise<void>;
   deleteProfile(profileId: string): Promise<void>;

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../lib/api';
 import { AuthGuard } from '../components/auth-guard';
+import { getCurrentProfileId } from '../../lib/profile';
 
 type Fact = {
   id: string;
@@ -23,13 +24,13 @@ export default function FactsPage() {
 
   const loadFacts = useCallback(async () => {
     setLoading(true); setError(null);
-    const profileId = window.localStorage.getItem('resume_builder_profile_id');
-    if (!profileId) {
+    const current = await getCurrentProfileId();
+    if (!current.id) {
       setError('Create a profile before reviewing facts.');
       setLoading(false);
       return;
     }
-    const response = await api.candidates.searchFacts(profileId, '');
+    const response = await api.candidates.searchFacts(current.id, '');
     if (response.data) setFacts(response.data.facts as Fact[]);
     else setError(response.error ?? 'Unable to load extracted facts');
     setLoading(false);
@@ -38,9 +39,9 @@ export default function FactsPage() {
   useEffect(() => { void loadFacts(); }, [loadFacts]);
 
   async function updateFact(factId: string, status: Fact['status']) {
-    const profileId = window.localStorage.getItem('resume_builder_profile_id');
-    if (!profileId) return;
-    const response = await api.candidates.updateFactStatus(profileId, factId, status);
+    const current = await getCurrentProfileId();
+    if (!current.id) return;
+    const response = await api.candidates.updateFactStatus(current.id, factId, status);
     if (response.error) setError(response.error);
     else {
       setFacts(current => current.map(fact => fact.id === factId ? { ...fact, status } : fact));

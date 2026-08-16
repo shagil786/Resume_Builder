@@ -4,6 +4,12 @@ import type { SearchSyncService } from '../services/search-sync.service.js';
 
 export async function candidateRoutes(app: FastifyInstance, service: ICandidateProfileService, searchSync: SearchSyncService) {
 
+  app.get('/', async (request, reply) => {
+    const profile = await service.getProfileForUser(request.userId);
+    if (!profile) { reply.status(404).send({ error: 'Profile not found' }); return; }
+    return profile;
+  });
+
   app.post<{ Body: { personalInfo: Record<string, unknown> } }>(
     '/',
     async (request, reply) => {

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '../../lib/api';
 import { AuthGuard } from '../components/auth-guard';
+import { getCurrentProfileId } from '../../lib/profile';
 
 export default function HistoryPage() {
   const [runs, setRuns] = useState<{ id: string; status: string; startedAt: string; completedAt?: string; templateId: string }[]>([]);
@@ -12,10 +13,10 @@ export default function HistoryPage() {
 
   const loadHistory = useCallback(async () => {
     setLoading(true); setError(null);
-    const profileId = window.localStorage.getItem('resume_builder_profile_id');
-    if (!profileId) { setLoading(false); return; }
+    const current = await getCurrentProfileId();
+    if (!current.id) { setLoading(false); return; }
     try {
-      const response = await api.candidates.generations(profileId);
+      const response = await api.candidates.generations(current.id);
       if (response.data) setRuns(response.data.runs);
       else setError(response.error ?? 'Unable to load generation history');
     } catch { setError('We could not reach generation history.'); }

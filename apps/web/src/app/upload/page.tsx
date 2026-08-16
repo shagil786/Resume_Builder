@@ -3,6 +3,7 @@ import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { api } from '../../lib/api';
 import { AuthGuard } from '../components/auth-guard';
+import { getCurrentProfileId } from '../../lib/profile';
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -26,10 +27,10 @@ export default function UploadPage() {
   const handleUpload = async () => {
     if (!file) return;
     setState('uploading'); setMessage(null);
-    const profileId = window.localStorage.getItem('resume_builder_profile_id');
-    if (!profileId) { setState('error'); setMessage('Create a profile before uploading your resume.'); }
+    const current = await getCurrentProfileId();
+    if (!current.id) { setState('error'); setMessage('Create a profile before uploading your resume.'); }
     else {
-      const response = await api.candidates.upload(profileId, file);
+      const response = await api.candidates.upload(current.id, file);
       if (response.error) { setState('error'); setMessage(response.error); }
       else { setFactCount(Number(response.data?.factCount ?? 0)); setState('success'); setMessage('Resume uploaded and facts extracted.'); }
     }

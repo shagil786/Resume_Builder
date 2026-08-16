@@ -34,6 +34,10 @@ export class CandidateProfileService implements ICandidateProfileService {
     return this.profiles.get(profileId) ?? null;
   }
 
+  async getProfileForUser(userId: string): Promise<CandidateProfile | null> {
+    return Array.from(this.profiles.values()).find(profile => profile.userId === userId) ?? null;
+  }
+
   async updateProfile(profileId: string, data: Partial<CandidateProfile>): Promise<void> {
     const profile = this.profiles.get(profileId);
     if (!profile) throw new AppError('CANDIDATE_PROFILE_NOT_FOUND', 'Profile not found');

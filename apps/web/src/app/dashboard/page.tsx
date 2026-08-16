@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getDashboardStats, type DashboardStats } from '@/lib/dashboard';
 import { api } from '@/lib/api';
+import { getCurrentProfileId } from '@/lib/profile';
 import { AuthGuard } from '../components/auth-guard';
 
 export default function DashboardPage() {
@@ -13,16 +14,16 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const savedId = window.localStorage.getItem('resume_builder_profile_id') ?? '';
-    setProfileId(savedId);
-    if (!savedId) { setLoading(false); return; }
-    Promise.all([getDashboardStats(savedId), api.candidates.generations(savedId)])
+    getCurrentProfileId().then(current => {
+      if (!current.id) { setLoading(false); return; }
+      setProfileId(current.id);
+      return Promise.all([getDashboardStats(current.id), api.candidates.generations(current.id)])
       .then(([dashboardStats, generations]) => {
         setStats(dashboardStats);
         if (generations.data) setRuns(generations.data.runs.slice(0, 3));
         else if (generations.error) setError(generations.error);
-      })
-      .catch(reason => setError(reason instanceof Error ? reason.message : 'Unable to load your workspace'))
+      });
+    }).catch(reason => setError(reason instanceof Error ? reason.message : 'Unable to load your workspace'))
       .finally(() => setLoading(false));
   }, []);
 

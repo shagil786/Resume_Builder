@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRef } from 'react';
 import { api } from '../../lib/api';
 import { AuthGuard } from '../components/auth-guard';
+import { getCurrentProfileId } from '../../lib/profile';
 
 export default function PreviewPage() {
   const [html, setHtml] = useState<string | null>(null);
@@ -13,8 +14,8 @@ export default function PreviewPage() {
   const previewRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    setProfileId(window.localStorage.getItem('resume_builder_profile_id') ?? '');
-    setRunId(new URLSearchParams(window.location.search).get('runId') ?? window.localStorage.getItem('resume_builder_generation_id') ?? '');
+    getCurrentProfileId().then(current => setProfileId(current.id ?? ''));
+    setRunId(new URLSearchParams(window.location.search).get('runId') ?? '');
   }, []);
 
   const loadPreview = async (requestedRunId = runId) => {

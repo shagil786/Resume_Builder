@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, type CandidateProfileResponse } from '../../lib/api';
 import { AuthGuard } from '../components/auth-guard';
+import { getCurrentProfileId } from '../../lib/profile';
 
 type ProfileForm = {
   firstName: string;
@@ -32,7 +33,8 @@ export default function ProfilePage() {
   const [created, setCreated] = useState(false);
 
   const loadProfile = useCallback(async () => {
-    const savedId = window.localStorage.getItem('resume_builder_profile_id');
+    const current = await getCurrentProfileId();
+    const savedId = current.id;
     if (!savedId) { setLoading(false); return; }
     setLoading(true); setError(null);
     setProfileId(savedId);
@@ -60,7 +62,6 @@ export default function ProfilePage() {
     if (response.error || !response.data) setError(response.error ?? 'Unable to save your profile');
     else {
       const id = profileId || ('profileId' in response.data ? response.data.profileId : '');
-      window.localStorage.setItem('resume_builder_profile_id', id);
       setProfileId(id);
       if (!profileId && form.summary.trim()) {
         const summaryResponse = await api.candidates.update(id, { summary: form.summary.trim() });

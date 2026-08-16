@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '../../lib/api';
 import { AuthGuard } from '../components/auth-guard';
+import { getCurrentProfileId } from '../../lib/profile';
 
 export default function JobPage() {
   const [url, setUrl] = useState('');
@@ -21,19 +22,18 @@ export default function JobPage() {
       return;
     }
     setGenerating(true);
-    const profileId = window.localStorage.getItem('resume_builder_profile_id');
-    if (!profileId) {
+    const current = await getCurrentProfileId();
+    if (!current.id) {
       setNotice({ type: 'error', text: 'Create a profile before generating a tailored resume.' });
       setGenerating(false);
       return;
     }
     try {
-      const response = await api.candidates.generate(profileId, { jobDescription: text.trim() || undefined, jobUrl: url.trim() || undefined, company: company.trim(), title: title.trim() });
+      const response = await api.candidates.generate(current.id, { jobDescription: text.trim() || undefined, jobUrl: url.trim() || undefined, company: company.trim(), title: title.trim() });
       if (response.error) setNotice({ type: 'error', text: response.error });
       else {
         const runId = (response.data as { run?: { id?: string } } | undefined)?.run?.id;
         if (runId) {
-          window.localStorage.setItem('resume_builder_generation_id', runId);
           router.push(`/preview?runId=${encodeURIComponent(runId)}`);
         } else setNotice({ type: 'error', text: 'Generation finished, but no preview was returned. Please try again.' });
       }
