@@ -14,6 +14,7 @@ import { candidateRoutes } from './routes/candidate.routes.js';
 import { generationRoutes } from './routes/generation.routes.js';
 import { renderingRoutes } from './routes/rendering.routes.js';
 import { documentRoutes } from './routes/document.routes.js';
+import { coverLetterRoutes } from './routes/cover-letter.routes.js';
 import type { DocumentServiceConfig } from './services/document.service.js';
 import { errorHandler } from './plugins/error-handler.js';
 
@@ -108,6 +109,11 @@ async function buildApp() {
   await app.register(async (instance) => {
     instance.addHook('preHandler', instance.authenticate);
     await documentRoutes(instance, service, docConfig);
+  }, { prefix: '/api/v1/candidates' });
+
+  await app.register(async (instance) => {
+    instance.addHook('preHandler', instance.authenticate);
+    await coverLetterRoutes(instance, service);
   }, { prefix: '/api/v1/candidates' });
 
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
