@@ -1,4 +1,5 @@
 import Fastify, { type FastifyInstance } from 'fastify';
+import rateLimit from '@fastify/rate-limit';
 import authPlugin from '../src/plugins/auth.js';
 import { authRoutes } from '../src/routes/auth.routes.js';
 import { candidateRoutes } from '../src/routes/candidate.routes.js';
@@ -15,6 +16,7 @@ export async function createTestApp(): Promise<FastifyInstance> {
   const service = new CandidateProfileService();
   const searchSync = new SearchSyncService();
 
+  await app.register(rateLimit, { global: false, skipOnError: true });
   await app.register(authPlugin, { secret: 'test-only-secret' });
   await app.register(async instance => authRoutes(instance), { prefix: '/api/v1' });
   await app.register(async instance => templateRoutes(instance), { prefix: '/api/v1/candidates' });

@@ -5,6 +5,7 @@ import { createUserRepository } from '@resume-builder/db';
 
 type MemoryUser = UserRecord;
 const users = new Map<string, MemoryUser>();
+const AUTH_RATE_LIMIT_MAX = Math.max(1, Number.parseInt(process.env.AUTH_RATE_LIMIT_MAX ?? '10', 10) || 10);
 
 function hashPassword(password: string): string {
   const salt = randomBytes(16).toString('hex');
@@ -33,6 +34,7 @@ export async function authRoutes(app: FastifyInstance, db?: DB) {
 
   app.post<{ Body: { email: string; password: string; name: string } }>(
     '/auth/register',
+    { config: { rateLimit: { max: AUTH_RATE_LIMIT_MAX, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const { email, password, name } = request.body;
       if (typeof email !== 'string' || typeof password !== 'string' || typeof name !== 'string' || !email.trim() || !password || !name.trim()) {
@@ -54,6 +56,7 @@ export async function authRoutes(app: FastifyInstance, db?: DB) {
 
   app.post<{ Body: { email: string; password: string } }>(
     '/auth/login',
+    { config: { rateLimit: { max: AUTH_RATE_LIMIT_MAX, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const { email, password } = request.body;
       if (typeof email !== 'string' || typeof password !== 'string' || !email.trim() || !password) {

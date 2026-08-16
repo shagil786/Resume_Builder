@@ -49,3 +49,20 @@ describe('Auth Flow', () => {
     expect(register.statusCode).toBe(400);
   });
 });
+
+describe('Auth rate limiting', () => {
+  let app: FastifyInstance;
+
+  beforeAll(async () => { app = await createTestApp(); });
+  afterAll(async () => { await app.close(); });
+
+  test('limits repeated registration attempts per client', async () => {
+    const responses = await Promise.all(Array.from({ length: 11 }, (_, index) => app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/register',
+      payload: { email: `rate-limit-${index}@example.com`, password: 'pass12345', name: 'Rate Limit' },
+    })));
+    expect(responses.at(-1)?.statusCode).toBe(429);
+    expect(responses.at(-1)?.headers['retry-after']).toBeDefined();
+  });
+});
