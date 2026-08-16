@@ -17,11 +17,18 @@ export interface ResumeVersion {
 
 export interface ResumeContent {
   sections: ResumeSection[];
+  header?: ResumeHeader;
   globalStyles?: ResumeStyles;
   metadata: {
     factUsageMap: Record<string, ResumeFactUsage>;
     sourceCoverageMap?: Record<string, unknown>;
   };
+}
+
+export interface ResumeHeader {
+  name: string;
+  headline?: string;
+  contact: string[];
 }
 
 export interface ResumeSection {
@@ -37,6 +44,8 @@ export interface ResumeItem {
   sourceFactIds?: string[];
   sourceReferences?: SourceReference[];
   content: string;
+  subtitle?: string;
+  meta?: string;
   bulletPoints?: ResumeBullet[];
 }
 

@@ -77,7 +77,7 @@ export class ResumeOrchestrator {
       const strategy = stage2.output as ResumeStrategy;
 
       const stage3 = await this.runStage('content_generation', async () => {
-        const resume = await this.writer.write(profile, strategy, facts, language);
+        const resume = await this.writer.write(profile, strategy, jobAnalysis, facts, language);
         return { output: resume, refs: strategy.selectedFacts };
       });
       stages.push(stage3.log);

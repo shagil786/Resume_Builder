@@ -1,7 +1,7 @@
 import type { LLMClient, LLMMessage, LLMClientConfig } from '../llm';
 import type { Logger } from '@resume-builder/shared';
 import { ConsoleLogger } from '@resume-builder/shared';
-import type { CandidateProfile, ResumeStrategy, ResumeContent, CandidateFact } from '@resume-builder/domain';
+import type { CandidateProfile, JobAnalysis, ResumeStrategy, ResumeContent, CandidateFact, ResumeSection } from '@resume-builder/domain';
 import { getPrompt } from '../prompts';
 import type { ResumeContentSchema } from '../schemas';
 
@@ -16,7 +16,7 @@ export class ResumeWriter {
     this.logger = logger ?? new ConsoleLogger('resume-writer');
   }
 
-  async write(_profile: CandidateProfile, strategy: ResumeStrategy, facts: CandidateFact[], language?: string): Promise<ResumeContent> {
+  async write(profile: CandidateProfile, strategy: ResumeStrategy, jobAnalysis: JobAnalysis, facts: CandidateFact[], language?: string): Promise<ResumeContent> {
     const systemPrompt = getPrompt('resume-writer-system');
     if (!systemPrompt) throw new Error('resume-writer-system prompt not registered');
 
@@ -25,12 +25,20 @@ export class ResumeWriter {
       `[${f.id}] (${f.category}) ${f.claim} — Source: ${f.sourceRef}`
     ).join('\n');
 
+    const jobRequirements = `Job Requirements:
+- Must-have skills: ${jobAnalysis.mustHaveSkills.map(skill => skill.skill).join(', ')}
+- Preferred skills: ${jobAnalysis.preferredSkills.map(skill => skill.skill).join(', ')}
+- Responsibilities: ${jobAnalysis.responsibilities.join('; ')}
+- Keywords: ${jobAnalysis.keywords.join(', ')}`;
+
     const messages: LLMMessage[] = [
       { role: 'system', content: systemPrompt.content },
       {
         role: 'user',
         content: `Target Role: ${strategy.targetRole}
 Language: ${language ?? 'English'}
+
+${jobRequirements}
 
 Strategy:
 - Emphasize: ${strategy.emphasize.join(', ')}
@@ -41,7 +49,7 @@ Strategy:
 Candidate Facts (use ONLY these):
 ${factText}
 
-Generate the resume content following the strategy.`,
+Generate a targeted resume for this job. Prioritize evidence that demonstrates the job requirements, mirror relevant terminology from the posting when supported by evidence, and omit unrelated profile content.`,
       },
     ];
 
@@ -52,41 +60,84 @@ Generate the resume content following the strategy.`,
 
     this.logger.info('Resume generation complete', { tokenUsage: response.tokenUsage });
 
-    return {
-      sections: [
+    const matchingExperience = (company: string, role: string) => profile.workExperience.find(experience =>
+      experience.company.toLowerCase() === company.toLowerCase() ||
+      experience.title.toLowerCase() === role.toLowerCase()
+    );
+    const formatDate = (date: Date) => date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    const formatRange = (start: Date, end?: Date) => `${formatDate(start)} - ${end ? formatDate(end) : 'Present'}`;
+    const experienceItems = content.experience.map((exp, i) => {
+      const source = matchingExperience(exp.company, exp.role);
+      return {
+        id: `exp-${i}`,
+        content: exp.company,
+        subtitle: exp.role,
+        meta: source ? `${formatRange(source.startDate, source.endDate)}${source.location ? ` · ${source.location}` : ''}` : undefined,
+        bulletPoints: exp.bullets.map(b => ({
+          id: `bullet-${i}-${b.evidence[0] ?? 'unknown'}`,
+          text: b.text,
+          evidence: b.evidence,
+        })),
+      };
+    });
+    const profileSkills = profile.skills.reduce<Record<string, string[]>>((groups, skill) => {
+      (groups[skill.category || 'Skills'] ??= []).push(skill.name);
+      return groups;
+    }, {});
+    const skills = Object.keys(content.skills).length > 0 ? content.skills : profileSkills;
+    const sections: ResumeSection[] = [
         {
           id: 'summary',
           type: 'SUMMARY',
           title: 'Summary',
           order: 1,
-          items: [{ id: 'summary-1', content: content.summary }],
+          items: [{ id: 'summary-1', content: content.summary || profile.summary || '' }],
         },
         {
           id: 'experience',
           type: 'EXPERIENCE',
           title: 'Experience',
           order: 2,
-          items: content.experience.map((exp, i) => ({
-            id: `exp-${i}`,
-            content: `${exp.role} at ${exp.company}`,
-            bulletPoints: exp.bullets.map(b => ({
-              id: `bullet-${i}-${b.evidence[0] ?? 'unknown'}`,
-              text: b.text,
-              evidence: b.evidence,
-            })),
-          })),
+          items: experienceItems,
         },
         {
           id: 'skills',
           type: 'SKILL',
           title: 'Skills',
           order: 3,
-          items: Object.entries(content.skills).map(([category, skills], i) => ({
+          items: Object.entries(skills).map(([category, skills], i) => ({
             id: `skills-${i}`,
             content: `${category}: ${skills.join(', ')}`,
           })),
         },
-      ],
+      ];
+    if (profile.projects.length > 0) sections.push({
+      id: 'projects', type: 'PROJECT', title: 'Projects', order: 4,
+      items: profile.projects.map(project => ({
+        id: project.id, content: project.name,
+        bulletPoints: project.bulletPoints.map(bullet => ({ id: bullet.id, text: bullet.text, evidence: bullet.factIds })),
+      })),
+    });
+    if (profile.education.length > 0) sections.push({
+      id: 'education', type: 'EDUCATION', title: 'Education', order: 5,
+      items: profile.education.map(entry => ({
+        id: entry.id,
+        content: entry.institution,
+        subtitle: `${entry.degree}${entry.fieldOfStudy ? ` in ${entry.fieldOfStudy}` : ''}`,
+        meta: formatRange(entry.startDate, entry.endDate),
+      })),
+    });
+
+    const personal = profile.personalInfo;
+    const contact = [personal.location, personal.phone, personal.email, personal.linkedinUrl, personal.githubUrl, personal.portfolioUrl]
+      .filter((value): value is string => Boolean(value));
+    return {
+      header: {
+        name: `${personal.firstName} ${personal.lastName}`.trim(),
+        headline: content.headline || strategy.targetRole,
+        contact,
+      },
+      sections,
       metadata: {
         factUsageMap: {},
       },
