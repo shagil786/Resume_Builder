@@ -136,9 +136,15 @@ export class DocumentService {
         this.logger.info('Document processed and facts stored', { factCount: processResult.facts.length });
       } catch (err) {
         this.logger.error('Document processing failed', { error: err });
+        document = { ...document, status: 'FAILED' };
         if (uow) {
-          await uow.sourceDocuments.updateStatus(document.id, 'FAILED');
-          await uow.sourceDocuments.update(document.id, { processingError: 'Document processing failed' });
+          try {
+            await uow.sourceDocuments.updateStatus(document.id, 'FAILED');
+            await uow.sourceDocuments.update(document.id, { processingError: 'Document processing failed' });
+          } catch (statusError) {
+            // Do not turn a recoverable processing failure into an HTTP 500.
+            this.logger.error('Unable to persist failed document status', { error: statusError });
+          }
         }
       }
     }
