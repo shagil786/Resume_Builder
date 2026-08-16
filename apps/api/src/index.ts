@@ -76,10 +76,15 @@ async function buildApp() {
   const config = await bootstrapStage('config', () => loadApplicationConfig());
   const app = Fastify({ logger: true });
 
-  const corsOrigins = (process.env.CORS_ORIGINS ?? '')
+  const configuredCorsOrigins = (process.env.CORS_ORIGINS ?? '')
     .split(',')
     .map(origin => origin.trim())
     .filter(Boolean);
+  const corsOrigins = configuredCorsOrigins.length > 0
+    ? configuredCorsOrigins
+    : process.env.NODE_ENV === 'production'
+      ? []
+      : ['http://localhost:3000', 'http://127.0.0.1:3000'];
   await app.register(cors, { origin: corsOrigins.length > 0 ? corsOrigins : false, credentials: corsOrigins.length > 0 });
   await app.register(cookie);
   await app.register(rateLimit, { global: false, skipOnError: true });

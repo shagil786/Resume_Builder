@@ -68,6 +68,7 @@ jobs:
               DATABASE_PORT=${{ vars.DATABASE_PORT }} \
               DATABASE_NAME=${{ vars.DATABASE_NAME }} \
               DATABASE_SSL=true \
+              CORS_ORIGINS=${{ vars.CORS_ORIGINS || 'http://localhost:3000,http://127.0.0.1:3000' }} \
               AZURE_OPENAI_ENDPOINT=${{ vars.AZURE_OPENAI_ENDPOINT }} \
               AZURE_OPENAI_DEPLOYMENT=${{ vars.AZURE_OPENAI_DEPLOYMENT }} \
               BLOB_ACCOUNT_NAME=${{ vars.BLOB_ACCOUNT_NAME }} \
