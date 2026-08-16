@@ -74,7 +74,11 @@ export class DocumentService {
       this.logger.warn('No blob storage configured — document not stored externally');
     }
 
-    checksum = await sha256(buffer);
+    try {
+      checksum = await sha256(buffer);
+    } catch (error) {
+      throw uploadStageError('checksum calculation', error);
+    }
 
     const docData = {
       profileId,
@@ -88,7 +92,11 @@ export class DocumentService {
 
     let document: SourceDocument;
     if (uow) {
-      document = await uow.sourceDocuments.create(docData);
+      try {
+        document = await uow.sourceDocuments.create(docData);
+      } catch (error) {
+        throw uploadStageError('database document persistence', error);
+      }
     } else {
       document = {
         id: `doc-${Date.now()}`,
@@ -154,6 +162,12 @@ export class DocumentService {
 
     return processor.process({ buffer, mimeType, filename, profileId });
   }
+}
+
+function uploadStageError(stage: string, cause: unknown): Error & { uploadStage?: string } {
+  const error = Object.assign(new Error(cause instanceof Error ? cause.message : 'Document upload failed'), { uploadStage: stage });
+  error.name = 'DocumentUploadStageError';
+  return error;
 }
 
 async function sha256(buffer: ArrayBuffer): Promise<string> {

@@ -54,16 +54,19 @@ export async function documentRoutes(
           factCount: result.processResult?.facts.length ?? 0,
         });
       } catch (error) {
+        const uploadStage = typeof error === 'object' && error !== null && 'uploadStage' in error && typeof error.uploadStage === 'string'
+          ? error.uploadStage
+          : stage;
         request.log.error({
           profileId: request.params.profileId,
           filename,
-          stage,
+          stage: uploadStage,
           error: error instanceof Error ? error.message : 'Unknown upload error',
         }, 'Resume upload failed');
         reply.status(500).send({
           error: {
             code: 'RESUME_UPLOAD_FAILED',
-            message: `Resume upload failed during ${stage}`,
+            message: `Resume upload failed during ${uploadStage}`,
             statusCode: 500,
             timestamp: new Date().toISOString(),
           },
