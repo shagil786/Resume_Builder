@@ -113,6 +113,10 @@ export async function candidateRoutes(app: FastifyInstance, service: ICandidateP
     async (request, reply) => {
       const fact = await service.getFactForProfile(request.params.profileId, request.params.factId);
       if (!fact) { reply.status(404).send({ error: 'Fact not found' }); return; }
+      if (!new Set(['VERIFIED', 'REJECTED', 'NEEDS_REVIEW']).has(request.body.status)) {
+        reply.status(400).send({ error: 'Invalid fact status' });
+        return;
+      }
       await service.updateFactStatus(request.params.factId, request.body.status, request.body.verificationNotes);
       return { status: 'UPDATED' };
     }

@@ -73,6 +73,8 @@ export const api = {
       request<{ certificationId: string }>(`/candidates/${id}/certifications`, { method: 'POST', body: JSON.stringify(body) }),
     searchFacts: (id: string, query: string) =>
       request<{ facts: unknown[]; total: number }>(`/candidates/${id}/facts/search`, { method: 'POST', body: JSON.stringify({ query }) }),
+    updateFactStatus: (profileId: string, factId: string, status: string, verificationNotes?: string) =>
+      request<{ status: string }>(`/candidates/${profileId}/facts/${factId}/status`, { method: 'PATCH', body: JSON.stringify({ status, verificationNotes }) }),
     generate: (id: string, body: { jobDescription: string; company: string; title: string; templateId?: string }) =>
       request<Record<string, unknown>>(`/candidates/${id}/generate`, { method: 'POST', body: JSON.stringify(body) }),
     upload: async (id: string, file: File): Promise<ApiResponse<Record<string, unknown>>> => {

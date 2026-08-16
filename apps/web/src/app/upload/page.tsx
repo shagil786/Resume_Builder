@@ -1,5 +1,6 @@
 'use client';
 import { useState, useRef } from 'react';
+import Link from 'next/link';
 import { api } from '../../lib/api';
 import { AuthGuard } from '../components/auth-guard';
 
@@ -44,7 +45,7 @@ export default function UploadPage() {
           {uploading ? 'Uploading...' : 'Upload & Extract'}
         </button>
 
-        {result && <p className="mt-3 text-sm text-slate-600">{result}</p>}
+        {result && <div className="mt-4 rounded-xl bg-slate-50 p-4 text-sm text-slate-600"><p>{result}</p><Link href="/facts" className="mt-2 inline-block font-semibold text-teal-700 hover:text-teal-800">Review extracted facts →</Link></div>}
       </div>
     </div></AuthGuard>
   );
