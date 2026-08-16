@@ -28,6 +28,7 @@ export async function documentRoutes(
         if (!file) { reply.status(400).send({ error: 'No file uploaded' }); return; }
 
         const buffer = await file.toBuffer();
+        const exactBytes = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer;
         filename = file.filename.split(/[\\/]/).pop()?.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 180) || 'resume';
         const extension = filename.toLowerCase().endsWith('.pdf') ? 'pdf' : filename.toLowerCase().endsWith('.docx') ? 'docx' : null;
         const bytes = new Uint8Array(buffer);
@@ -43,7 +44,7 @@ export async function documentRoutes(
           request.params.profileId,
           filename,
           file.mimetype,
-          buffer.buffer as ArrayBuffer
+          exactBytes
         );
 
         reply.status(201).send({
