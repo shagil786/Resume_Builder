@@ -42,4 +42,11 @@ test.describe('Web App', () => {
     await expect(page.getByRole('navigation', { name: 'Mobile navigation' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'My profile' })).toBeVisible();
   });
+
+  test('profile workspace presents editable contact fields', async ({ page }) => {
+    await page.goto('/profile');
+    await expect(page.locator('h1')).toContainText('Candidate profile');
+    await expect(page.getByLabel('First name')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Create profile' })).toBeVisible();
+  });
 });

@@ -5,6 +5,29 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
+export interface CandidateProfileResponse {
+  id: string;
+  personalInfo: {
+    firstName: string;
+    lastName: string;
+    email?: string;
+    phone?: string;
+    location?: string;
+    linkedinUrl?: string;
+    githubUrl?: string;
+    portfolioUrl?: string;
+    piiFields: { path: string; visibility: 'USER_ONLY' | 'HIRING_MANAGER' | 'PUBLIC' }[];
+  };
+  summary?: string;
+  status: 'DRAFT' | 'FINALIZED';
+  workExperience: unknown[];
+  projects: unknown[];
+  skills: unknown[];
+  education: unknown[];
+  certifications: unknown[];
+  sourceDocuments: unknown[];
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<ApiResponse<T>> {
   try {
     const token = typeof window !== 'undefined' ? window.localStorage.getItem('resume_builder_token') : null;
@@ -32,7 +55,7 @@ export const api = {
   candidates: {
     create: (body: { personalInfo: Record<string, unknown> }) =>
       request<{ profileId: string }>('/candidates', { method: 'POST', body: JSON.stringify(body) }),
-    get: (id: string) => request<Record<string, unknown>>(`/candidates/${id}`),
+    get: (id: string) => request<CandidateProfileResponse>(`/candidates/${id}`),
     update: (id: string, body: Record<string, unknown>) =>
       request<{ status: string }>(`/candidates/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
     delete: (id: string) => request<void>(`/candidates/${id}`, { method: 'DELETE' }),
