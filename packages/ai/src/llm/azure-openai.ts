@@ -7,11 +7,12 @@ export function createAzureOpenAIClient(config: {
   apiVersion?: string;
 }): LLMClient {
   const apiVersion = config.apiVersion ?? '2025-01-01-preview';
+  const endpoint = config.endpoint.replace(/\/(?:openai\/v1|openai)\/?$/, '');
 
   return {
     async complete(messages: LLMMessage[], overrides): Promise<LLMResponse> {
       const response = await fetch(
-        `${config.endpoint}/openai/deployments/${overrides?.model ?? config.deployment}/chat/completions?api-version=${apiVersion}`,
+        `${endpoint}/openai/deployments/${overrides?.model ?? config.deployment}/chat/completions?api-version=${apiVersion}`,
         {
           method: 'POST',
           headers: {
