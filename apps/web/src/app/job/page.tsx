@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '../../lib/api';
 import { AuthGuard } from '../components/auth-guard';
 import { getCurrentProfileId } from '../../lib/profile';
+import { getSelectedTemplateId } from '../../lib/template';
 
 export default function JobPage() {
   const [url, setUrl] = useState('');
@@ -35,7 +36,7 @@ export default function JobPage() {
       return;
     }
     try {
-      const response = await api.candidates.generate(current.id, { jobDescription: text.trim() || undefined, jobUrl: url.trim() || undefined, company: company.trim(), title: title.trim() });
+      const response = await api.candidates.generate(current.id, { jobDescription: text.trim() || undefined, jobUrl: url.trim() || undefined, company: company.trim(), title: title.trim(), templateId: getSelectedTemplateId() });
       if (response.error) setNotice({ type: 'error', text: response.error });
       else {
         const runId = (response.data as { run?: { id?: string } } | undefined)?.run?.id;
