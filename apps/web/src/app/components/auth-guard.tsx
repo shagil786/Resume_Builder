@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { api } from '../../lib/api';
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -26,7 +27,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => { checkSession(); }, [pathname, router]);
 
-  if (checking && !ready) return <div className="surface mx-auto max-w-[1120px] p-6 text-sm text-[#64736f]" role="status">Checking your session…</div>;
+  if (checking && !ready) return <div className="surface mx-auto flex max-w-[1120px] items-center gap-3 p-6 text-sm text-muted" role="status"><Loader2 aria-hidden className="animate-spin text-accent" size={16} /> Checking your session…</div>;
   if (error && !ready) return <div className="page-shell"><div className="status-error mx-auto max-w-xl p-6" role="alert"><p className="font-semibold">Session check unavailable</p><p className="mt-2 text-sm">{error}</p><button type="button" onClick={checkSession} className="btn btn-secondary mt-5 min-h-[36px] text-xs">Try again</button></div></div>;
   if (!ready) return null;
   return <>{children}</>;

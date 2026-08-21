@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Check } from 'lucide-react';
 import { api } from '../../lib/api';
 
 function LoginForm() {
@@ -36,7 +37,7 @@ function LoginForm() {
   }
 
   return <div className="page-shell flex min-h-[calc(100vh-72px)] items-center py-10"><div className="surface mx-auto grid w-full max-w-4xl overflow-hidden lg:grid-cols-[.9fr_1.1fr]">
-    <div className="bg-[#14231f] p-8 text-white sm:p-10"><p className="eyebrow text-[#8cd1c5]">Your career workspace</p><h1 className="mt-6 text-3xl font-bold tracking-tight">Make your experience easier to see.</h1><p className="mt-4 text-sm leading-7 text-[#c4d2ce]">Keep your source facts organized, tailor each application, and review every suggestion before it becomes part of your resume.</p><div className="mt-10 space-y-4">{['One profile you can keep improving', 'Evidence attached to your achievements', 'A focused resume for every role'].map(item => <div key={item} className="flex gap-3 text-sm text-[#e0ebe8]"><span className="text-[#8cd1c5]">✓</span>{item}</div>)}</div></div>
+    <div className="bg-[#14231f] p-8 text-white sm:p-10"><p className="eyebrow text-[#8cd1c5]">Your career workspace</p><h1 className="mt-6 text-3xl font-bold tracking-tight">Make your experience easier to see.</h1><p className="mt-4 text-sm leading-7 text-[#c4d2ce]">Keep your source facts organized, tailor each application, and review every suggestion before it becomes part of your resume.</p><div className="mt-10 space-y-4">{['One profile you can keep improving', 'Evidence attached to your achievements', 'A focused resume for every role'].map(item => <div key={item} className="flex gap-3 text-sm text-[#e0ebe8]"><Check aria-hidden className="mt-0.5 shrink-0 text-[#8cd1c5]" size={16} strokeWidth={3} />{item}</div>)}</div></div>
     <div className="p-8 sm:p-10"><p className="eyebrow">{register ? 'Create your workspace' : 'Welcome back'}</p><h2 className="mt-2 text-2xl font-bold tracking-tight text-[#17211f]">{register ? 'Start with your experience' : 'Sign in to continue'}</h2><form onSubmit={submit} className="mt-7 space-y-5">
       {register && <label htmlFor="account-name" className="field-label">Name<input id="account-name" required autoComplete="name" value={name} onChange={e => setName(e.target.value)} placeholder="Alex Morgan" className="field-control" /></label>}
       <label htmlFor="account-email" className="field-label">Email<input id="account-email" required autoComplete="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" className="field-control" /></label>

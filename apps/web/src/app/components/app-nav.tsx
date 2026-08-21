@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Menu, X } from 'lucide-react';
 import { api } from '../../lib/api';
 
 const navItems = [
@@ -54,9 +54,9 @@ export function AppNav() {
 
       <div className="flex items-center gap-2 lg:hidden">
         <Link href="/job" className="btn btn-primary min-h-[38px] px-3 text-xs">Build</Link>
-        <button type="button" aria-expanded={open} aria-controls="mobile-navigation" aria-label={open ? 'Close navigation' : 'Open navigation'} onClick={() => setOpen(value => !value)} className="rounded-md border border-[#d9e2df] p-2 text-[#32433e] hover:bg-[#f3f7f6]">
+        <button type="button" aria-expanded={open} aria-controls="mobile-navigation" aria-label={open ? 'Close navigation' : 'Open navigation'} onClick={() => setOpen(value => !value)} className="rounded-md border border-line p-2 text-label hover:bg-[#f3f7f6]">
           <span className="sr-only">{open ? 'Close navigation' : 'Open navigation'}</span>
-          <span className="block h-0.5 w-5 bg-current" /><span className="mt-1 block h-0.5 w-5 bg-current" /><span className="mt-1 block h-0.5 w-5 bg-current" />
+          {open ? <X aria-hidden size={20} /> : <Menu aria-hidden size={20} />}
         </button>
       </div>
 

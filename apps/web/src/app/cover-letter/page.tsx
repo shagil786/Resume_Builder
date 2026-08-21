@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { Mail } from 'lucide-react';
 import { AuthGuard } from '../components/auth-guard';
 
 const STORAGE_KEY = 'resume_builder_cover_letter';
@@ -33,8 +34,9 @@ export default function CoverLetterPage() {
       <div className="page-header"><div><p className="eyebrow">Pair it with your resume</p><h1 className="page-title">Cover letter preview</h1><p className="page-description">A tailored letter built from the same verified facts as your resume. Review it before sending.</p></div></div>
 
       {!html && (
-        <div className="surface p-8 text-center">
-          <p className="text-sm text-[#64736f]">No cover letter generated yet.</p>
+        <div className="surface p-12 text-center">
+          <Mail aria-hidden className="mx-auto text-accent" size={32} />
+          <p className="mt-3 text-sm text-muted">No cover letter generated yet.</p>
           <Link href="/job" className="btn btn-primary mt-4 inline-block">Generate one from a job description</Link>
         </div>
       )}

@@ -1,7 +1,10 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { LayoutTemplate } from 'lucide-react';
 import { api } from '../../lib/api';
 import { getSelectedTemplateId, setSelectedTemplateId } from '../../lib/template';
+import { Skeleton } from '../components/skeleton';
 
 interface Template { id: string; name: string; description: string; category: string; }
 
@@ -10,7 +13,6 @@ export default function TemplatesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
 
   const loadTemplates = useCallback(async () => {
     setLoading(true); setError(null);
@@ -31,18 +33,15 @@ export default function TemplatesPage() {
   const chooseTemplate = (id: string) => {
     setSelected(id);
     setSelectedTemplateId(id);
-    setSaved(true);
-    window.setTimeout(() => setSaved(false), 2500);
+    toast.success('Saved — your next generated resume will use this layout.');
   };
 
   return (
     <div className="page-shell">
       <div className="page-header"><div><p className="eyebrow">Presentation</p><h1 className="page-title">Templates that keep the focus on you.</h1><p className="page-description">Choose a clear starting point for your resume. Your selection applies to the next resume you generate. You can change the layout as your application evolves.</p></div></div>
 
-      {saved && <p role="status" className="status-info p-3 text-sm">Saved — your next generated resume will use this layout.</p>}
-
-      {loading && <div className="surface p-8 text-sm text-[#64736f]">Loading templates…</div>}
-      {error && <div role="alert" className="status-error flex flex-col justify-between gap-3 p-4 text-sm sm:flex-row sm:items-center"><span>{error}</span><button type="button" onClick={() => void loadTemplates()} className="btn btn-secondary min-h-[34px] px-3 text-xs">Try again</button></div>}
+      {loading && <div className="surface grid grid-cols-1 gap-5 p-6 sm:grid-cols-2 lg:grid-cols-3">{[0, 1, 2].map(i => <Skeleton key={i} className="h-64 w-full" />)}</div>}
+      {error && <div role="alert" className="status-error flex flex-col justify-between gap-3 text-sm sm:flex-row sm:items-center"><span>{error}</span><button type="button" onClick={() => void loadTemplates()} className="btn btn-secondary min-h-[34px] px-3 text-xs">Try again</button></div>}
 
       <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {templates.map(t => (
@@ -69,7 +68,7 @@ export default function TemplatesPage() {
       </div>
 
       {!loading && !error && templates.length === 0 && (
-        <div className="surface-muted mt-6 p-10 text-center"><p className="font-semibold text-[#32433e]">No templates yet</p><p className="mt-1 text-sm text-[#64736f]">Templates will appear here when the API is available.</p></div>
+        <div className="surface-muted mt-6 p-10 text-center"><LayoutTemplate aria-hidden className="mx-auto text-accent" size={32} /><p className="mt-3 font-semibold text-label">No templates yet</p><p className="mt-1 text-sm text-muted">Templates will appear here when the API is available.</p></div>
       )}
     </div>
   );
