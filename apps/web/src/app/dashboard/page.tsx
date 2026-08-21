@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { motion } from 'motion/react';
 import { ArrowRight, Briefcase, FolderGit2, GraduationCap, BadgeCheck, Wrench } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { getDashboardStats, type DashboardStats } from '@/lib/dashboard';
@@ -37,18 +38,22 @@ export default function DashboardPage() {
       {!loading && !profileId && <div className="status-info mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><p className="font-bold">Set up your candidate profile first.</p><p className="mt-1 text-sm">Your profile is the source for facts, matching, and tailored resumes.</p></div><Link href="/profile" className="btn btn-primary shrink-0">Create profile</Link></div>}
       {error && <p role="alert" className="status-error mb-6 text-sm">{error}</p>}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {cards.map(card => {
+        {cards.map((card, index) => {
           const Icon = card.icon;
           const value = loading ? null : stats?.[card.key as keyof DashboardStats] ?? 0;
           return (
-            <Link key={card.key} href={card.href}
-              className="surface p-4 transition hover:-translate-y-0.5 hover:border-line-accent sm:p-5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-soft text-accent"><Icon aria-hidden size={16} /></span>
-              {value === null
-                ? <Skeleton className="mt-3 h-9 w-12" />
-                : <div className="mt-3 text-3xl font-bold tracking-tight text-ink">{value}</div>}
-              <div className="mt-1 text-xs font-semibold text-muted">{card.label}</div>
-            </Link>
+            <motion.div key={card.key}
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.06, ease: 'easeOut' }}>
+              <Link href={card.href}
+                className="surface block p-4 transition hover:-translate-y-0.5 hover:border-line-accent sm:p-5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-soft text-accent"><Icon aria-hidden size={16} /></span>
+                {value === null
+                  ? <Skeleton className="mt-3 h-9 w-12" />
+                  : <div className="mt-3 text-3xl font-bold tracking-tight text-ink">{value}</div>}
+                <div className="mt-1 text-xs font-semibold text-muted">{card.label}</div>
+              </Link>
+            </motion.div>
           );
         })}
       </div>

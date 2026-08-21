@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
+import { motion } from 'motion/react';
 import { toast } from 'sonner';
 import { LayoutTemplate } from 'lucide-react';
 import { api } from '../../lib/api';
@@ -44,9 +45,11 @@ export default function TemplatesPage() {
       {error && <div role="alert" className="status-error flex flex-col justify-between gap-3 text-sm sm:flex-row sm:items-center"><span>{error}</span><button type="button" onClick={() => void loadTemplates()} className="btn btn-secondary min-h-[34px] px-3 text-xs">Try again</button></div>}
 
       <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {templates.map(t => (
-          <button key={t.id} onClick={() => chooseTemplate(t.id)}
+        {templates.map((t, index) => (
+          <motion.button key={t.id} onClick={() => chooseTemplate(t.id)}
             aria-pressed={selected === t.id}
+            initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: index * 0.07, ease: 'easeOut' }}
             className={`surface p-4 text-left transition-all ${
               selected === t.id
                 ? 'border-[#0d6b62] bg-[#f2faf8] ring-2 ring-[#c8ded9]'
@@ -63,7 +66,7 @@ export default function TemplatesPage() {
             <span className="mt-3 inline-block rounded-md bg-[#e3f2ef] px-2 py-1 text-[10px] font-bold tracking-wide text-[#09564f]">
               {t.category}
             </span>
-          </button>
+          </motion.button>
         ))}
       </div>
 
