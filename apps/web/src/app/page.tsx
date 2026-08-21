@@ -39,20 +39,20 @@ export default function HomePage() {
           transition={{ type: 'spring', stiffness: 220, damping: 18 }}
           className="surface relative z-10 overflow-hidden bg-[#14231f] p-3 shadow-md sm:p-4"
         >
-          <div className="rounded-[14px] bg-white p-5 sm:p-7">
+          <div className="rounded-[14px] bg-white p-5 text-[#17211f] sm:p-7">
             <div className="flex items-start justify-between gap-4 border-b border-[#e6ece9] pb-5">
-              <div><p className="eyebrow">Resume workspace</p><p className="mt-2 text-xl font-bold tracking-tight text-ink">Product Designer <span className="font-normal text-muted">· v3</span></p></div>
-              <span className="shrink-0 rounded-md bg-accent-soft px-2.5 py-1.5 text-[11px] font-bold text-accent-strong">Ready to review</span>
+              <div><p className="eyebrow">Resume workspace</p><p className="mt-2 text-xl font-bold tracking-tight">Product Designer <span className="font-normal text-[#5d6c67]">· v3</span></p></div>
+              <span className="shrink-0 rounded-md bg-[#e3f2ef] px-2.5 py-1.5 text-[11px] font-bold text-[#09564f]">Ready to review</span>
             </div>
             <div className="mt-6 space-y-3">
               {['Experience matched to the role', 'Skills backed by source evidence', 'Layout checked for readability'].map((itemText, index) => (
-                <div key={itemText} className="flex items-center gap-3 border-b border-[#edf1ef] py-3 last:border-0"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-soft text-xs font-bold text-accent">{index + 1}</span><span className="text-sm font-semibold text-label">{itemText}</span><Check aria-hidden className="ml-auto text-success" size={16} strokeWidth={3} /></div>
+                <div key={itemText} className="flex items-center gap-3 border-b border-[#edf1ef] py-3 last:border-0"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#e3f2ef] text-xs font-bold text-[#0d6b62]">{index + 1}</span><span className="text-sm font-semibold text-[#32433e]">{itemText}</span><Check aria-hidden className="ml-auto text-[#087443]" size={16} strokeWidth={3} /></div>
               ))}
             </div>
-            <div className="mt-6 flex items-center justify-between text-xs font-semibold text-muted"><span>Profile readiness</span><span>80%</span></div>
+            <div className="mt-6 flex items-center justify-between text-xs font-semibold text-[#5d6c67]"><span>Profile readiness</span><span>80%</span></div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#e7eeeb]">
               <motion.div
-                className="h-full bg-accent"
+                className="h-full bg-[#0d6b62]"
                 initial={reduced ? false : { width: 0 }}
                 animate={{ width: '80%' }}
                 transition={{ duration: 0.9, delay: 0.6, ease: 'easeOut' }}

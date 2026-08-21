@@ -41,7 +41,7 @@ export function AppNav() {
       <div className="hidden items-center gap-0.5 lg:flex">
         {navItems.map(item => (
           <Link key={item.href} href={item.href}
-            className={`rounded-md px-3 py-2 text-[13px] font-semibold transition ${isActive(pathname, item.href) ? 'bg-[#e3f2ef] text-[#09564f]' : 'text-[#64736f] hover:bg-[#f3f7f6] hover:text-[#17211f]'}`}>
+            className={`rounded-md px-3 py-2 text-[13px] font-semibold transition ${isActive(pathname, item.href) ? 'bg-accent-soft text-accent-strong' : 'text-muted hover:bg-accent-wash hover:text-ink'}`}>
             {item.label}
           </Link>
         ))}
@@ -63,11 +63,11 @@ export function AppNav() {
         </button>
       </div>
 
-      {open && <div id="mobile-navigation" className="w-full border-t border-[#edf1ef] pb-3 pt-3 lg:hidden">
+      {open && <div id="mobile-navigation" className="w-full border-t border-line pb-3 pt-3 lg:hidden">
         <nav aria-label="Mobile navigation" className="grid gap-1">
-          {navItems.map(item => <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className={`rounded-md px-3 py-2.5 text-sm font-semibold ${isActive(pathname, item.href) ? 'bg-[#e3f2ef] text-[#09564f]' : 'text-[#32433e] hover:bg-[#f3f7f6]'}`}>{item.label}</Link>)}
-          <Link href="/upload" onClick={() => setOpen(false)} className="rounded-md px-3 py-2.5 text-sm font-semibold text-[#32433e] hover:bg-[#f3f7f6]">Upload resume</Link>
-          {authenticated ? <button type="button" onClick={() => void signOut()} className="rounded-md px-3 py-2.5 text-left text-sm font-semibold text-[#32433e] hover:bg-[#f3f7f6]">Sign out</button> : <Link href="/login" onClick={() => setOpen(false)} className="rounded-md px-3 py-2.5 text-sm font-semibold text-[#32433e] hover:bg-[#f3f7f6]">Account</Link>}
+          {navItems.map(item => <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className={`rounded-md px-3 py-2.5 text-sm font-semibold ${isActive(pathname, item.href) ? 'bg-accent-soft text-accent-strong' : 'text-label hover:bg-accent-wash'}`}>{item.label}</Link>)}
+          <Link href="/upload" onClick={() => setOpen(false)} className="rounded-md px-3 py-2.5 text-sm font-semibold text-label hover:bg-accent-wash">Upload resume</Link>
+          {authenticated ? <button type="button" onClick={() => void signOut()} className="rounded-md px-3 py-2.5 text-left text-sm font-semibold text-label hover:bg-accent-wash">Sign out</button> : <Link href="/login" onClick={() => setOpen(false)} className="rounded-md px-3 py-2.5 text-sm font-semibold text-label hover:bg-accent-wash">Account</Link>}
         </nav>
       </div>}
     </>
