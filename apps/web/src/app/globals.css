@@ -1,61 +1,110 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+@custom-variant dark (&:where(.dark, .dark *));
 
-  --color-ink: #17211f;
-  --color-heading: #13201d;
-  --color-body-strong: #1a2824;
-  --color-label: #32433e;
-  --color-secondary: #29403b;
-  --color-muted: #64736f;
-  --color-subtle: #64736f;
-  --color-faint: #9aa8a4;
-  --color-line: #d9e2df;
-  --color-line-strong: #cbd8d4;
-  --color-line-accent: #a9c8c1;
-  --color-paper: #ffffff;
-  --color-canvas: #f6f8f7;
-  --color-canvas-tint: #f9fbfa;
-  --color-accent: #0d6b62;
-  --color-accent-strong: #09564f;
-  --color-accent-soft: #e3f2ef;
-  --color-accent-wash: #f8fcfb;
-  --color-danger: #b42318;
-  --color-success: #087443;
+/* Runtime-switchable semantic tokens */
+:root {
+  --canvas: #f6f8f7;
+  --canvas-tint: #f9fbfa;
+  --paper: #ffffff;
+  --ink: #17211f;
+  --heading: #13201d;
+  --body-strong: #1a2824;
+  --label: #32433e;
+  --secondary: #29403b;
+  --muted: #5d6c67;
+  --subtle: #5d6c67;
+  --faint: #7e8c87;
+  --line: #d9e2df;
+  --line-strong: #cbd8d4;
+  --line-accent: #a9c8c1;
+  --accent: #0d6b62;
+  --accent-strong: #09564f;
+  --accent-soft: #e3f2ef;
+  --accent-wash: #f8fcfb;
+  --danger: #b42318;
+  --danger-soft-bg: #fff7f6;
+  --danger-soft-line: #f2c4c0;
+  --success: #087443;
+  --success-soft-bg: #f0fbf4;
+  --success-soft-line: #b9e2cc;
+  --info-bg: #f2faf8;
+  --info-line: #c8ded9;
+  --info-text: #28635b;
+  --skeleton: #e2ebe8;
 
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 18px;
+}
+
+.dark {
+  --canvas: #0e1514;
+  --canvas-tint: #121b19;
+  --paper: #16201e;
+  --ink: #e8efec;
+  --heading: #f2f7f5;
+  --body-strong: #dde8e3;
+  --label: #c9d6d1;
+  --secondary: #b7c6c0;
+  --muted: #93a39d;
+  --subtle: #93a39d;
+  --faint: #67766f;
+  --line: #243230;
+  --line-strong: #2e403d;
+  --line-accent: #3a5450;
+  --accent: #3aa391;
+  --accent-strong: #5cbcab;
+  --accent-soft: #14332e;
+  --accent-wash: #12211e;
+  --danger: #f08a7e;
+  --danger-soft-bg: #2a1715;
+  --danger-soft-line: #55302b;
+  --success: #4cc38a;
+  --success-soft-bg: #11241b;
+  --success-soft-line: #1f4633;
+  --info-bg: #10231f;
+  --info-line: #23443d;
+  --info-text: #8cd1c5;
+  --skeleton: #223029;
+}
+
+/* Utilities map to the runtime vars so dark mode flips everywhere at once */
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-canvas: var(--canvas);
+  --color-canvas-tint: var(--canvas-tint);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-heading: var(--heading);
+  --color-body-strong: var(--body-strong);
+  --color-label: var(--label);
+  --color-secondary: var(--secondary);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-line-accent: var(--line-accent);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-wash: var(--accent-wash);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-skeleton: var(--skeleton);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
 
   --shadow-xs: 0 1px 2px rgb(18 35 31 / 5%);
   --shadow-sm: 0 1px 2px rgb(18 35 31 / 5%), 0 5px 18px rgb(18 35 31 / 4%);
-  --shadow-md: 0 2px 6px rgb(18 35 31 / 6%), 0 12px 32px rgb(18 35 31 / 8%);
+  --shadow-md: 0 2px 6px rgb(10 20 17 / 10%), 0 12px 32px rgb(10 20 17 / 12%);
 }
 
-/* Legacy aliases so existing component classes (var(--muted) etc.) keep working. */
-:root {
-  --ink: var(--color-ink);
-  --heading: var(--color-heading);
-  --body-strong: var(--color-body-strong);
-  --label: var(--color-label);
-  --secondary: var(--color-secondary);
-  --muted: var(--color-muted);
-  --subtle: var(--color-subtle);
-  --faint: var(--color-faint);
-  --line: var(--color-line);
-  --line-strong: var(--color-line-strong);
-  --line-accent: var(--color-line-accent);
-  --paper: var(--color-paper);
-  --canvas: var(--color-canvas);
-  --canvas-tint: var(--color-canvas-tint);
-  --accent: var(--color-accent);
-  --accent-strong: var(--color-accent-strong);
-  --accent-soft: var(--color-accent-soft);
-  --accent-wash: var(--color-accent-wash);
-  --danger: var(--color-danger);
-  --success: var(--color-success);
-}
+.dark { --shadow-xs: none; --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 20px rgb(0 0 0 / 25%); }
 
 * { box-sizing: border-box; }
 
@@ -76,18 +125,19 @@ body { color: var(--ink); background: var(--canvas); }
 .btn:active { transform: translateY(1px); }
 .btn-primary { color: #fff; background: var(--accent); }
 .btn-primary:hover { background: var(--accent-strong); }
-.btn-secondary { color: var(--secondary); border: 1px solid var(--line); background: #fff; }
+.dark .btn-primary { color: #0c1513; }
+.btn-secondary { color: var(--secondary); border: 1px solid var(--line); background: var(--paper); }
 .btn-secondary:hover { border-color: var(--line-accent); color: var(--accent-strong); background: var(--accent-wash); }
 .btn-quiet { color: var(--muted); }
 .btn-quiet:hover { color: var(--accent-strong); background: var(--accent-soft); }
 .field-label { display: block; color: var(--label); font-size: 13px; font-weight: 700; }
-.field-control { display: block; width: 100%; margin-top: 7px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: #fff; padding: 11px 12px; color: var(--ink); font-size: 14px; line-height: 1.4; outline: none; transition: border-color .15s, box-shadow .15s; }
+.field-control { display: block; width: 100%; margin-top: 7px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--paper); padding: 11px 12px; color: var(--ink); font-size: 14px; line-height: 1.4; outline: none; transition: border-color .15s, box-shadow .15s; }
 .field-control::placeholder { color: var(--faint); }
 .field-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgb(13 107 98 / 14%); }
 .field-help { margin-top: 6px; color: var(--subtle); font-size: 12px; line-height: 1.45; }
-.status-success { border: 1px solid #b9e2cc; border-radius: var(--radius-md); background: #f0fbf4; color: var(--success); padding: 10px 14px; }
-.status-error { border: 1px solid #f2c4c0; border-radius: var(--radius-md); background: #fff7f6; color: var(--danger); padding: 10px 14px; }
-.status-info { border: 1px solid var(--line-accent); border-radius: var(--radius-md); background: var(--accent-soft); color: #28635b; padding: 10px 14px; }
+.status-success { border: 1px solid var(--success-soft-line); border-radius: var(--radius-md); background: var(--success-soft-bg); color: var(--success); padding: 10px 14px; }
+.status-error { border: 1px solid var(--danger-soft-line); border-radius: var(--radius-md); background: var(--danger-soft-bg); color: var(--danger); padding: 10px 14px; }
+.status-info { border: 1px solid var(--info-line); border-radius: var(--radius-md); background: var(--info-bg); color: var(--info-text); padding: 10px 14px; }
 
 @media (max-width: 640px) {
   .page-shell { width: min(100% - 28px, 1120px); padding-block: 32px 56px; }

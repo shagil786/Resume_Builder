@@ -77,7 +77,7 @@ export default function HomePage() {
               >
                 <div className="flex items-center justify-between">
                   <span className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-accent-soft text-accent"><Icon aria-hidden size={20} /></span>
-                  <span className="text-xs font-bold text-faint">0{index + 1}</span>
+                  <span className="text-xs font-bold text-muted">0{index + 1}</span>
                 </div>
                 <h3 className="mt-5 font-semibold text-ink">{f.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-muted">{f.desc}</p>

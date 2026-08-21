@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { api } from '../../lib/api';
+import { ThemeToggle } from './theme-toggle';
 
 const navItems = [
   { href: '/dashboard', label: 'Workspace' },
@@ -47,13 +48,15 @@ export function AppNav() {
       </div>
 
       <div className="hidden items-center gap-3 lg:flex">
-        <Link href="/upload" className="mr-2 text-[13px] font-semibold text-[#64736f] transition hover:text-[#0d6b62]">Upload resume</Link>
+        <Link href="/upload" className="mr-2 text-[13px] font-semibold text-muted transition hover:text-accent">Upload resume</Link>
+        <ThemeToggle />
         {authenticated && <button type="button" onClick={() => void signOut()} className="btn btn-quiet min-h-[40px] px-3 text-[13px]">Sign out</button>}
         <Link href="/job" className="btn btn-primary min-h-[40px]">Build a resume</Link>
       </div>
 
       <div className="flex items-center gap-2 lg:hidden">
         <Link href="/job" className="btn btn-primary min-h-[38px] px-3 text-xs">Build</Link>
+        <ThemeToggle />
         <button type="button" aria-expanded={open} aria-controls="mobile-navigation" aria-label={open ? 'Close navigation' : 'Open navigation'} onClick={() => setOpen(value => !value)} className="rounded-md border border-line p-2 text-label hover:bg-[#f3f7f6]">
           <span className="sr-only">{open ? 'Close navigation' : 'Open navigation'}</span>
           {open ? <X aria-hidden size={20} /> : <Menu aria-hidden size={20} />}

@@ -47,7 +47,7 @@ export default function UploadPage() {
           role="button" tabIndex={0} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') inputRef.current?.click(); }} onClick={() => inputRef.current?.click()}
           onDragOver={event => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)}
           onDrop={event => { event.preventDefault(); setDragging(false); selectFile(event.dataTransfer.files?.[0]); }}
-          className={`flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed p-12 text-center transition-colors ${dragging ? 'border-accent bg-accent-soft' : 'border-[#b9cbc6] bg-[#f7faf9] hover:border-accent hover:bg-accent-soft'}`}>
+          className={`flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed p-12 text-center transition-colors ${dragging ? 'border-accent bg-accent-soft' : 'border-line-accent bg-accent-wash hover:border-accent hover:bg-accent-soft'}`}>
           <div className="flex h-12 w-12 items-center justify-center rounded-md bg-accent-soft text-accent">
             {state === 'uploading' ? <Loader2 aria-hidden className="animate-spin" size={22} /> : <UploadCloud aria-hidden size={22} />}
           </div>
