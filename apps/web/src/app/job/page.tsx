@@ -11,16 +11,22 @@ export default function JobPage() {
   const [company, setCompany] = useState('');
   const [title, setTitle] = useState('');
   const [generating, setGenerating] = useState(false);
+  const [letterLoading, setLetterLoading] = useState(false);
   const [notice, setNotice] = useState<{ type: 'error' | 'info'; text: string } | null>(null);
   const router = useRouter();
+
+  const validateJobInput = (): string | null => {
+    if (text.trim().length < 40 && !url.trim()) {
+      return 'Paste the full job description or add a public job posting URL.';
+    }
+    return null;
+  };
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     setNotice(null);
-    if (text.trim().length < 40 && !url.trim()) {
-      setNotice({ type: 'error', text: 'Paste the full job description or add a public job posting URL.' });
-      return;
-    }
+    const validationError = validateJobInput();
+    if (validationError) { setNotice({ type: 'error', text: validationError }); return; }
     setGenerating(true);
     const current = await getCurrentProfileId();
     if (!current.id) {
@@ -41,6 +47,30 @@ export default function JobPage() {
       setNotice({ type: 'error', text: 'We could not generate this resume. Check your connection and try again.' });
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleCoverLetter = async () => {
+    setNotice(null);
+    const validationError = validateJobInput();
+    if (validationError) { setNotice({ type: 'error', text: validationError }); return; }
+    setLetterLoading(true);
+    const current = await getCurrentProfileId();
+    if (!current.id) {
+      setNotice({ type: 'error', text: 'Create a profile before generating a cover letter.' });
+      setLetterLoading(false);
+      return;
+    }
+    try {
+      const response = await api.candidates.generateCoverLetter(current.id, { jobDescription: text.trim() || undefined, jobUrl: url.trim() || undefined, company: company.trim(), title: title.trim() });
+      if (response.error) { setNotice({ type: 'error', text: response.error }); return; }
+      if (!response.data?.html) { setNotice({ type: 'error', text: 'The letter came back empty. Please try again.' }); return; }
+      try { sessionStorage.setItem('resume_builder_cover_letter', response.data.html); } catch { /* storage unavailable */ }
+      router.push('/cover-letter');
+    } catch {
+      setNotice({ type: 'error', text: 'We could not generate the cover letter. Check your connection and try again.' });
+    } finally {
+      setLetterLoading(false);
     }
   };
 
@@ -80,10 +110,16 @@ export default function JobPage() {
           <div className="mt-2 flex justify-between gap-3 text-xs text-[#64736f]"><span>Include responsibilities and requirements for a stronger match.</span><span>{text.length} characters</span></div>
         </div>
 
-        <button type="submit" disabled={generating}
-          className="btn btn-primary disabled:cursor-not-allowed disabled:opacity-50">
-          {generating ? 'Matching facts and drafting…' : 'Generate tailored resume'}
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button type="submit" disabled={generating || letterLoading}
+            className="btn btn-primary disabled:cursor-not-allowed disabled:opacity-50">
+            {generating ? 'Matching facts and drafting…' : 'Generate tailored resume'}
+          </button>
+          <button type="button" onClick={() => void handleCoverLetter()} disabled={generating || letterLoading}
+            className="btn btn-secondary disabled:cursor-not-allowed disabled:opacity-50">
+            {letterLoading ? 'Writing your letter…' : 'Generate cover letter'}
+          </button>
+        </div>
 
         {notice && <p role={notice.type === 'error' ? 'alert' : 'status'} className={`${notice.type === 'error' ? 'status-error' : 'status-info'} p-3 text-sm`}>{notice.text}</p>}
       </form>

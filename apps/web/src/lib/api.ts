@@ -90,6 +90,8 @@ export const api = {
       request<{ status: string }>(`/candidates/${profileId}/facts/${factId}/status`, { method: 'PATCH', body: JSON.stringify({ status, verificationNotes }) }),
     generate: (id: string, body: { jobDescription?: string; jobUrl?: string; company: string; title: string; templateId?: string }) =>
       request<Record<string, unknown>>(`/candidates/${id}/generate`, { method: 'POST', body: JSON.stringify(body) }),
+    generateCoverLetter: (id: string, body: { jobDescription?: string; jobUrl?: string; company: string; title: string }) =>
+      request<{ coverLetter: { subject: string; salutation: string; body: string[]; closing: string }; html: string }>(`/candidates/${id}/cover-letter`, { method: 'POST', body: JSON.stringify(body) }),
     generations: (id: string) => request<{ runs: { id: string; status: string; startedAt: string; completedAt?: string; templateId: string }[] }>(`/candidates/${id}/generations`),
     generation: (id: string, runId: string) => request<{ run: { id: string; status: string }; resume: { sections: unknown[]; metadata: Record<string, unknown> }; factCheck: { valid: boolean; issues: unknown[] } }>(`/candidates/${id}/generations/${runId}`),
     generationPreview: (id: string, runId: string) => fetch(`${API_BASE}/candidates/${id}/generations/${runId}/preview`, { credentials: 'include' }).then(async response => response.ok ? response.text() : null),
