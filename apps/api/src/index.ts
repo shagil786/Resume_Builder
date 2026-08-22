@@ -149,6 +149,9 @@ async function buildApp() {
   });
 
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
+  // The Azure Function adapter forwards full paths, so the liveness probe
+  // must also exist under the /api/v1 namespace.
+  app.get('/api/v1/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 
   return app;
 }
