@@ -1,3 +1,14 @@
-export { createLLMClient } from './client';
+export { createLLMClient } from './mock';
 export { createAzureOpenAIClient } from './azure-openai';
-export type { LLMClient, LLMMessage, LLMResponse, LLMClientConfig } from './client';
+export { extractJson } from './client';
+export type {
+  LLMClient,
+  LLMMessage,
+  LLMResponse,
+  LLMClientConfig,
+  LLMCompleteOptions,
+  JsonSchemaOption,
+} from './client';
+
+export { completeJson } from './complete-json';
+export type { CompleteJsonResult } from './complete-json';

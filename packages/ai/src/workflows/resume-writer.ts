@@ -1,9 +1,23 @@
 import type { LLMClient, LLMMessage, LLMClientConfig } from '../llm';
+import { completeJson } from '../llm';
 import type { Logger } from '@resume-builder/shared';
 import { ConsoleLogger } from '@resume-builder/shared';
 import type { CandidateProfile, Job, JobAnalysis, ResumeStrategy, ResumeContent, CandidateFact, ResumeSection } from '@resume-builder/domain';
 import { getPrompt } from '../prompts';
-import type { ResumeContentSchema } from '../schemas';
+import { RESUME_CONTENT_SCHEMA } from '../schemas/json-schemas';
+
+interface WriterExperience {
+  company: string;
+  role: string;
+  bullets: { text: string; evidence: string[] }[];
+}
+
+interface WriterContent {
+  headline: string;
+  summary: string;
+  skills: { category: string; items: string[] }[];
+  experience: WriterExperience[];
+}
 
 export class ResumeWriter {
   private client: LLMClient;
@@ -20,7 +34,14 @@ export class ResumeWriter {
     const systemPrompt = getPrompt('resume-writer-system');
     if (!systemPrompt) throw new Error('resume-writer-system prompt not registered');
 
-    const sourceFacts = facts.filter(f => f.status !== 'REJECTED');
+    // Honor the strategist's selection when it picked valid facts; otherwise
+    // fall back to every non-rejected fact so thin evidence still produces output.
+    const eligible = facts.filter(f => f.status !== 'REJECTED');
+    const chosen = strategy.selectedFacts.length > 0
+      ? eligible.filter(f => strategy.selectedFacts.includes(f.id))
+      : [];
+    const sourceFacts = chosen.length > 0 ? chosen : eligible;
+
     const factText = sourceFacts.map(f =>
       `[${f.id}] (${f.category}) ${f.claim} — Source: ${f.sourceRef}`
     ).join('\n');
@@ -46,22 +67,30 @@ ${jobRequirements}
 Strategy:
 - Emphasize: ${strategy.emphasize.join(', ')}
 - De-emphasize: ${strategy.deemphasize.join(', ') || 'none'}
-- Experience priority: ${strategy.experiencePriority.join(' > ')}
-- Section budget: ${JSON.stringify(strategy.sectionBudget)}
+- Experience priority: ${strategy.experiencePriority.join(' > ') || 'most relevant first'}
+- Section budget (approximate words): ${JSON.stringify(strategy.sectionBudget)}
 
 Candidate Facts (use ONLY these; preserve all relevant source history):
 ${factText}
 
-Generate a targeted ATS resume for this job. Preserve every distinct employer, role, date range, and material accomplishment represented in the candidate facts; do not collapse the work history into one generic entry. Prioritize and order the most relevant evidence first, mirror job terminology only when supported by evidence, and omit only content unrelated to the target role. Use 3-6 accomplishment bullets per relevant employer and include older roles when they demonstrate transferable requirements.`,
+Generate a targeted ATS resume for this job:
+- Preserve EVERY distinct employer, role, and date range present in the facts — never merge two jobs into one entry.
+- Order experience entries by relevance to the target role first.
+- Write 2-5 accomplishment bullets per relevant employer; each bullet cites the fact IDs it derives from in "evidence".
+- Group skills into categories (e.g. Languages, Frameworks, Tools) using only technologies supported by evidence.
+- Summary: max 3 sentences, specific, no buzzwords.`,
       },
     ];
 
-    this.logger.info('Generating resume content', { targetRole: strategy.targetRole, selectedFacts: sourceFacts.length });
+    this.logger.info('Generating resume content', { targetRole: strategy.targetRole, evidenceFacts: sourceFacts.length });
 
-    const response = await this.client.complete(messages, this.config);
-    const content = JSON.parse(response.content) as ResumeContentSchema;
+    const { data, tokenUsage } = await completeJson(this.client, messages, {
+      ...this.config,
+      jsonSchema: RESUME_CONTENT_SCHEMA,
+    });
+    const content = data as unknown as WriterContent;
 
-    this.logger.info('Resume generation complete', { tokenUsage: response.tokenUsage });
+    this.logger.info('Resume generation complete', { tokenUsage });
 
     const matchingExperience = (company: string, role: string) => profile.workExperience.find(experience =>
       experience.company.toLowerCase() === company.toLowerCase() ||
@@ -76,7 +105,7 @@ Generate a targeted ATS resume for this job. Preserve every distinct employer, r
         content: exp.company,
         subtitle: exp.role,
         meta: source ? `${formatRange(source.startDate, source.endDate)}${source.location ? ` · ${source.location}` : ''}` : undefined,
-        bulletPoints: exp.bullets.map(b => ({
+        bulletPoints: (exp.bullets ?? []).map(b => ({
           id: `bullet-${i}-${b.evidence[0] ?? 'unknown'}`,
           text: b.text,
           evidence: b.evidence,
@@ -87,7 +116,9 @@ Generate a targeted ATS resume for this job. Preserve every distinct employer, r
       (groups[skill.category || 'Skills'] ??= []).push(skill.name);
       return groups;
     }, {});
-    const skills = Object.keys(content.skills).length > 0 ? content.skills : profileSkills;
+    const skillGroups = content.skills.length > 0
+      ? content.skills
+      : Object.entries(profileSkills).map(([category, items]) => ({ category, items }));
     const sections: ResumeSection[] = [
         {
           id: 'summary',
@@ -108,9 +139,9 @@ Generate a targeted ATS resume for this job. Preserve every distinct employer, r
           type: 'SKILL',
           title: 'Skills',
           order: 3,
-          items: Object.entries(skills).map(([category, skills], i) => ({
+          items: skillGroups.map((group, i) => ({
             id: `skills-${i}`,
-            content: `${category}: ${skills.join(', ')}`,
+            content: `${group.category}: ${group.items.join(', ')}`,
           })),
         },
       ];

@@ -1,11 +1,11 @@
-import type { LLMClient, LLMMessage, LLMResponse } from './client';
+import type { LLMMessage, LLMResponse } from './client';
 
 export function createAzureOpenAIClient(config: {
   endpoint: string;
   apiKey: string;
   deployment: string;
   apiVersion?: string;
-}): LLMClient {
+}): import('./client').LLMClient {
   const apiVersion = config.apiVersion ?? '2025-04-01-preview';
   const endpoint = config.endpoint.replace(/\/(?:openai\/v1|openai)\/?$/, '');
 
@@ -14,11 +14,22 @@ export function createAzureOpenAIClient(config: {
       const deployment = config.deployment;
       const requestBody: Record<string, unknown> = {
         messages,
-        max_completion_tokens: overrides?.maxTokens ?? 4000,
-        response_format: { type: 'json_object' },
+        max_completion_tokens: overrides?.maxTokens ?? 8000,
       };
       if (!deployment.toLowerCase().startsWith('gpt-5')) {
         requestBody.temperature = overrides?.temperature ?? 0.2;
+      }
+      if (overrides?.jsonSchema) {
+        requestBody.response_format = {
+          type: 'json_schema',
+          json_schema: {
+            name: overrides.jsonSchema.name,
+            strict: true,
+            schema: overrides.jsonSchema.schema,
+          },
+        };
+      } else {
+        requestBody.response_format = { type: 'json_object' };
       }
 
       const response = await fetch(

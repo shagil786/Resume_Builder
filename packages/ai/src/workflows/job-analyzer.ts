@@ -1,9 +1,10 @@
 import type { LLMClient, LLMMessage, LLMClientConfig } from '../llm';
+import { completeJson } from '../llm';
 import type { Logger } from '@resume-builder/shared';
 import { ConsoleLogger } from '@resume-builder/shared';
 import type { Job, JobAnalysis } from '@resume-builder/domain';
 import { getPrompt } from '../prompts';
-import type { JobAnalysisSchema } from '../schemas';
+import { JOB_ANALYSIS_SCHEMA } from '../schemas/json-schemas';
 
 export interface JobAnalyzerConfig extends LLMClientConfig {
   model: string;
@@ -31,23 +32,29 @@ export class JobAnalyzer {
 
     this.logger.info('Analyzing job', { jobId: job.id, title: job.title });
 
-    const response = await this.client.complete(messages, this.config);
-    const analysis = JSON.parse(response.content) as JobAnalysisSchema;
+    const { data, tokenUsage } = await completeJson(this.client, messages, {
+      ...this.config,
+      jsonSchema: JOB_ANALYSIS_SCHEMA,
+    });
+    const analysis = data as unknown as JobAnalysis & { experienceYearsMin?: number | null; experienceLevel?: string | null };
 
-    this.logger.info('Job analysis complete', { jobId: job.id, role: analysis.role, tokenUsage: response.tokenUsage });
+    this.logger.info('Job analysis complete', { jobId: job.id, role: analysis.role, tokenUsage });
 
     return {
       role: analysis.role,
       company: analysis.company,
       seniority: analysis.seniority,
-      mustHaveSkills: analysis.mustHaveSkills,
-      preferredSkills: analysis.preferredSkills,
-      responsibilities: analysis.responsibilities,
-      domain: analysis.domain,
-      keywords: analysis.keywords,
-      leadershipExpectations: analysis.leadershipExpectations,
-      educationRequirements: analysis.educationRequirements,
-      experienceRequirements: analysis.experienceRequirements,
+      mustHaveSkills: analysis.mustHaveSkills ?? [],
+      preferredSkills: analysis.preferredSkills ?? [],
+      responsibilities: analysis.responsibilities ?? [],
+      domain: analysis.domain ?? [],
+      keywords: analysis.keywords ?? [],
+      leadershipExpectations: analysis.leadershipExpectations ?? [],
+      educationRequirements: analysis.educationRequirements ?? [],
+      experienceRequirements: {
+        yearsMin: analysis.experienceYearsMin ?? null,
+        level: analysis.experienceLevel ?? null,
+      },
     };
   }
 }

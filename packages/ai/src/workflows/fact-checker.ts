@@ -1,9 +1,15 @@
 import type { LLMClient, LLMMessage, LLMClientConfig } from '../llm';
+import { completeJson } from '../llm';
 import type { Logger } from '@resume-builder/shared';
 import { ConsoleLogger } from '@resume-builder/shared';
 import type { CandidateFact, ResumeContent, ResumeFitEvaluation } from '@resume-builder/domain';
 import { getPrompt } from '../prompts';
-import type { FactCheckResultSchema } from '../schemas';
+import { FACT_CHECK_SCHEMA } from '../schemas/json-schemas';
+
+interface FactCheckResult {
+  valid: boolean;
+  issues: { claim: string; reason: string; severity: 'info' | 'warning' | 'critical'; classification: string }[];
+}
 
 export class FactChecker {
   private client: LLMClient;
@@ -25,7 +31,12 @@ export class FactChecker {
         item.content,
         ...(item.bulletPoints?.map(b => b.text) ?? []),
       ])
-    );
+    ).filter(claim => claim && claim.trim().length > 0);
+
+    // Nothing to verify against → nothing can be unsupported.
+    if (facts.length === 0 || resumeClaims.length === 0) {
+      return { valid: true, issues: [] };
+    }
 
     const factText = facts.map(f =>
       `[${f.id}] ${f.claim} (confidence: ${f.confidence}, status: ${f.status})`
@@ -41,14 +52,18 @@ export class FactChecker {
 
     this.logger.info('Fact-checking resume', { claims: resumeClaims.length, facts: facts.length });
 
-    const response = await this.client.complete(messages, this.config);
-    const result = JSON.parse(response.content) as FactCheckResultSchema;
+    const { data, tokenUsage } = await completeJson(this.client, messages, {
+      ...this.config,
+      jsonSchema: FACT_CHECK_SCHEMA,
+    });
+    const result = data as unknown as FactCheckResult;
 
     const criticalIssues = result.issues.filter(i => i.severity === 'critical');
     this.logger.info('Fact check complete', {
       total: result.issues.length,
       critical: criticalIssues.length,
       valid: result.valid,
+      tokenUsage,
     });
 
     return {

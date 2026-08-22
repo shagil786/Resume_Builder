@@ -1,9 +1,10 @@
 import type { LLMClient, LLMMessage, LLMClientConfig } from '../llm';
+import { completeJson } from '../llm';
 import type { Logger } from '@resume-builder/shared';
 import { ConsoleLogger } from '@resume-builder/shared';
 import type { CandidateProfile, JobAnalysis, ResumeContent } from '@resume-builder/domain';
 import { getPrompt } from '../prompts';
-import type { MatchEvaluationSchema } from '../schemas';
+import { MATCH_EVALUATION_SCHEMA } from '../schemas/json-schemas';
 
 export interface MatchEvaluation {
   technical_skills: number;
@@ -40,19 +41,14 @@ export class MatchEvaluator {
 
     this.logger.info('Evaluating job match', { targetRole: jobAnalysis.role });
 
-    const response = await this.client.complete(messages, this.config);
-    const evaluation = JSON.parse(response.content) as MatchEvaluationSchema;
+    const { data, tokenUsage } = await completeJson(this.client, messages, {
+      ...this.config,
+      jsonSchema: MATCH_EVALUATION_SCHEMA,
+    });
+    const evaluation = data as unknown as MatchEvaluation;
 
-    this.logger.info('Match evaluation complete', { overall: evaluation.overall_match });
+    this.logger.info('Match evaluation complete', { overall: evaluation.overall_match, tokenUsage });
 
-    return {
-      technical_skills: evaluation.technical_skills,
-      responsibilities: evaluation.responsibilities,
-      seniority: evaluation.seniority,
-      domain_knowledge: evaluation.domain_knowledge,
-      keyword_coverage: evaluation.keyword_coverage,
-      education: evaluation.education,
-      overall_match: evaluation.overall_match,
-    };
+    return evaluation;
   }
 }
