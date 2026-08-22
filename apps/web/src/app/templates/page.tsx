@@ -6,8 +6,45 @@ import { LayoutTemplate } from 'lucide-react';
 import { api } from '../../lib/api';
 import { getSelectedTemplateId, setSelectedTemplateId } from '../../lib/template';
 import { Skeleton } from '../components/skeleton';
+import { useTilt } from '@/lib/animations/use-tilt';
 
 interface Template { id: string; name: string; description: string; category: string; }
+
+function TemplateCard({ t, selected, onChoose }: {
+  t: Template;
+  selected: boolean;
+  onChoose: (id: string) => void;
+}) {
+  const tilt = useTilt<HTMLButtonElement>(3);
+
+  return (
+    <motion.button
+      ref={tilt.ref}
+      onClick={() => onChoose(t.id)}
+      onMouseMove={tilt.onMouseMove}
+      onMouseLeave={tilt.onMouseLeave}
+      aria-pressed={selected}
+      initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.05, ease: 'easeOut' }}
+      className={`surface p-4 text-left transition-colors will-change-transform ${
+        selected
+          ? 'border-accent bg-accent-soft ring-2 ring-line-accent'
+          : 'hover:border-line-accent'
+      }`}>
+      <div className="mb-1 flex h-32 items-end gap-1 rounded-md border border-line bg-accent-wash p-4">
+        <span className="h-16 w-1/4 rounded-sm bg-[#c8ded9]" /><span className="h-24 w-1/3 rounded-sm bg-[#8cbdb5]" /><span className="h-20 flex-1 rounded-sm bg-accent" />
+      </div>
+      <div className="mt-4 flex items-center justify-between gap-2">
+        <h3 className="font-semibold text-heading">{t.name}</h3>
+        {selected && <span className="rounded-md bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">Selected</span>}
+      </div>
+      <p className="mt-1 line-clamp-2 text-sm leading-5 text-muted">{t.description}</p>
+      <span className="mt-3 inline-block rounded-md bg-accent-soft px-2 py-1 text-[10px] font-bold tracking-wide text-accent-strong">
+        {t.category}
+      </span>
+    </motion.button>
+  );
+}
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -46,27 +83,11 @@ export default function TemplatesPage() {
 
       <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {templates.map((t, index) => (
-          <motion.button key={t.id} onClick={() => chooseTemplate(t.id)}
-            aria-pressed={selected === t.id}
+          <motion.div key={t.id}
             initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: index * 0.07, ease: 'easeOut' }}
-            className={`surface p-4 text-left transition-all ${
-              selected === t.id
-                ? 'border-[#0d6b62] bg-[#f2faf8] ring-2 ring-[#c8ded9]'
-                : 'hover:border-[#a9c8c1]'
-            }`}>
-            <div className="mb-1 flex h-32 items-end gap-1 rounded-md border border-[#e2ebe8] bg-[#f7faf9] p-4">
-              <span className="h-16 w-1/4 bg-[#c8ded9]" /><span className="h-24 w-1/3 bg-[#8cbdb5]" /><span className="h-20 flex-1 bg-[#0d6b62]" />
-            </div>
-            <div className="mt-4 flex items-center justify-between gap-2">
-              <h3 className="font-semibold text-[#17211f]">{t.name}</h3>
-              {selected === t.id && <span className="rounded-md bg-[#0d6b62] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">Selected</span>}
-            </div>
-            <p className="mt-1 text-sm leading-5 text-[#64736f] line-clamp-2">{t.description}</p>
-            <span className="mt-3 inline-block rounded-md bg-[#e3f2ef] px-2 py-1 text-[10px] font-bold tracking-wide text-[#09564f]">
-              {t.category}
-            </span>
-          </motion.button>
+            transition={{ duration: 0.4, delay: index * 0.07, ease: 'easeOut' }}>
+            <TemplateCard t={t} selected={selected === t.id} onChoose={chooseTemplate} />
+          </motion.div>
         ))}
       </div>
 
