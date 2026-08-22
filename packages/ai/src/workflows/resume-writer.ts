@@ -26,7 +26,7 @@ export class ResumeWriter {
 
   constructor(client: LLMClient, config: Partial<LLMClientConfig> = {}, logger?: Logger) {
     this.client = client;
-    this.config = { model: 'gpt-4-32k', temperature: 0.2, ...config };
+    this.config = { model: 'gpt-4o', temperature: 0.2, ...config };
     this.logger = logger ?? new ConsoleLogger('resume-writer');
   }
 

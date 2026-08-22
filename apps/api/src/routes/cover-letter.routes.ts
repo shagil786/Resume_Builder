@@ -50,8 +50,10 @@ export async function coverLetterRoutes(app: FastifyInstance, profileService: IC
           })
         : createLLMClient({ model: 'gpt-4o-mini', temperature: 0.3 });
 
-      const analyzer = new JobAnalyzer(llm);
-      const writer = new CoverLetterWriter(llm);
+      const analyzerDeployment = process.env.AZURE_OPENAI_DEPLOYMENT_JOB_ANALYZER?.trim();
+      const writerDeployment = process.env.AZURE_OPENAI_DEPLOYMENT_COVER_LETTER?.trim();
+      const analyzer = new JobAnalyzer(llm, analyzerDeployment ? { model: analyzerDeployment } : undefined);
+      const writer = new CoverLetterWriter(llm, writerDeployment ? { model: writerDeployment } : undefined);
 
       const job = {
         id: `job-${Date.now()}`,

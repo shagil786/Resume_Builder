@@ -11,7 +11,9 @@ export function createAzureOpenAIClient(config: {
 
   return {
     async complete(messages: LLMMessage[], overrides): Promise<LLMResponse> {
-      const deployment = config.deployment;
+      // Per-call model wins (stage-level config), falling back to the
+      // client default. On Azure these are deployment names.
+      const deployment = overrides?.model ?? config.deployment;
       const requestBody: Record<string, unknown> = {
         messages,
         max_completion_tokens: overrides?.maxTokens ?? 8000,

@@ -5,6 +5,16 @@ import type { ApplicationConfig } from '@resume-builder/config';
 import type { DB } from '@resume-builder/db';
 import { createUnitOfWork } from '@resume-builder/db';
 
+/**
+ * Per-stage deployment overrides. On Azure OpenAI these are deployment
+ * names; each falls back to the primary deployment when unset, so you can
+ * route cheap models at analysis stages and stronger models at writing.
+ */
+function stageOverrides(stage: string): { model: string } | undefined {
+  const model = process.env[`AZURE_OPENAI_DEPLOYMENT_${stage}`]?.trim();
+  return model ? { model } : undefined;
+}
+
 export class GenerationService {
   private orchestrator: ResumeOrchestrator;
   private runs = new Map<string, GenerationRun>();
@@ -23,7 +33,13 @@ export class GenerationService {
       llm = createLLMClient({ model: 'gpt-4o-mini', temperature: 0.2 });
     }
 
-    this.orchestrator = new ResumeOrchestrator(llm);
+    this.orchestrator = new ResumeOrchestrator(llm, {
+      jobAnalyzer: stageOverrides('JOB_ANALYZER'),
+      resumeStrategist: stageOverrides('STRATEGIST'),
+      resumeWriter: stageOverrides('WRITER'),
+      factChecker: stageOverrides('FACT_CHECKER'),
+      matchEvaluator: stageOverrides('EVALUATOR'),
+    });
   }
 
   async generate(
