@@ -1,29 +1,19 @@
 # Tech Debt & Planned Work
 
-Updated Aug 17, 2026 after full audit. Original items #9-#17 (web, CI/CD, bicep, upload, search sync, PDF, auth) are all DONE.
+Updated Aug 22, 2026. Items 1-4 below are DONE (cover letter UI ✅, template wiring ✅, CI suites ✅, web DEPLOYED ✅).
 
-## Genuinely Open
-
-### 1. Cover letter has no frontend (HIGH — hidden feature)
-Backend fully works: `POST /:profileId/cover-letter` returns `{ coverLetter, html }`.
-- Add `api.candidates.generateCoverLetter()` to `apps/web/src/lib/api.ts`
-- Add UI entry point (button on /job page or new route) + preview/download
-- ~1-2 hours of work
-
-### 2. Template selection is visual-only (MEDIUM)
-/templates page stores selection in local state only; generation ignores it.
-Plumbing already exists end-to-end (`generate`/`render` accept `templateId`, DB persists it).
-Note: html-engine deliberately uses ATS single-column layout for generated resumes regardless of template — decide whether template selection should influence ATS output or only preview rendering.
-- Wire selectedTemplateId through job page → generate call
-- Persist selection (localStorage or profile field)
-
-### 3. CI gaps (MEDIUM)
-- ci.yml does not run the API vitest suite or web Playwright tests
-- No lint step exists anywhere (no eslint config)
-
-### 4. Web app never deployed (MEDIUM)
-deploy.yml builds apps/web as a compile check but deploys only the API function.
-Decide hosting: Azure Static Web Apps / Container Apps / Vercel.
+## Deployment (LIVE as of Aug 22, 2026)
+- **Site**: https://salmon-sand-0b2bd040f.7.azurestaticapps.net (SWA `resume-builder-web`, Free SKU)
+- **API**: https://shagilnizami786-api.azurewebsites.net (Azure Function)
+- **Deploy from LOCAL** — GitHub Actions is billing-locked, so this is the path until resolved:
+  ```bash
+  cd apps/web
+  BUILD_STATIC=true NEXT_PUBLIC_API_URL=https://shagilnizami786-api.azurewebsites.net/api/v1 npx next build
+  NEXT_PUBLIC_API_URL=https://shagilnizami786-api.azurewebsites.net/api/v1 node scripts/swa-config.mjs
+  npx @azure/static-web-apps-cli deploy ./out --deployment-token "$(az staticwebapp secrets list -n resume-builder-web -g rg-shagilnizami786-1129 --query properties.apiKey -o tsv)" --env production
+  ```
+- CORS_ORIGINS on the Function includes the SWA domain; auth cookie SameSite=None+Secure+HttpOnly verified working cross-site (register + /auth/me round-trip from live origin)
+- GitHub Actions: ALL workflows fail instantly — account locked for billing (github.com/settings/billing). deploy-web.yml is committed and will work once unlocked.
 
 ### 5. In-memory fallbacks (LOW, known tradeoff)
 Auth users table is DB-backed now, but some services still fall back to Maps without DATABASE_HOST. Fine for dev; data loss on Function cold start if misconfigured in prod. Consider fail-fast in production when config missing.
