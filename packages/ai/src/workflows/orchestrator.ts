@@ -90,17 +90,39 @@ export class ResumeOrchestrator {
       });
       stages.push(stage4.log);
       if (stage4.log.status === 'FAILED') throw new Error(stage4.log.error ?? 'Fact verification failed');
-      const factCheck = stage4.output as { valid: boolean; issues: { claim: string; reason: string; severity: string }[] };
+      let factCheck = stage4.output as { valid: boolean; issues: { claim: string; reason: string; severity: string }[] };
+      let finalResume = resume;
+
+      // Evidence gate: critical findings trigger ONE targeted revision pass,
+      // then reverification. The shipped version is always the re-checked one.
+      const criticalIssues = factCheck.issues.filter(issue => issue.severity === 'critical');
+      if (criticalIssues.length > 0) {
+        const stage5 = await this.runStage('content_revision', async () => {
+          const revised = await this.writer.revise(profile, strategy, job, jobAnalysis, facts, resume, criticalIssues, language);
+          return { output: revised, refs: strategy.selectedFacts };
+        });
+        stages.push(stage5.log);
+        if (stage5.log.status === 'FAILED') throw new Error(stage5.log.error ?? 'Content revision failed');
+        finalResume = stage5.output as ResumeContent;
+
+        const stage6 = await this.runStage('fact_reverification', async () => {
+          const result = await this.factChecker.validate(finalResume, facts);
+          return { output: result, refs: strategy.selectedFacts };
+        });
+        stages.push(stage6.log);
+        if (stage6.log.status === 'FAILED') throw new Error(stage6.log.error ?? 'Fact reverification failed');
+        factCheck = stage6.output as typeof factCheck;
+      }
 
       let matchEvaluation: MatchEvaluation | null = null;
       if (factCheck.valid) {
-        const stage5 = await this.runStage('job_fit_evaluation', async () => {
-          const evaluation = await this.matchEvaluator.evaluate(profile, resume, jobAnalysis);
+        const stage7 = await this.runStage('job_fit_evaluation', async () => {
+          const evaluation = await this.matchEvaluator.evaluate(profile, finalResume, jobAnalysis);
           return { output: evaluation, refs: [job.id] };
         });
-        stages.push(stage5.log);
-        if (stage5.log.status === 'FAILED') throw new Error(stage5.log.error ?? 'Job fit evaluation failed');
-        matchEvaluation = stage5.output as MatchEvaluation;
+        stages.push(stage7.log);
+        if (stage7.log.status === 'FAILED') throw new Error(stage7.log.error ?? 'Job fit evaluation failed');
+        matchEvaluation = stage7.output as MatchEvaluation;
       }
 
       const completedAt = new Date();
@@ -115,9 +137,9 @@ export class ResumeOrchestrator {
         stages,
       };
 
-      this.logger.info('Resume generation completed', { runId, factCheckValid: factCheck.valid });
+      this.logger.info('Resume generation completed', { runId, factCheckValid: factCheck.valid, revised: finalResume !== resume });
 
-      return { run, resume, factCheck, matchEvaluation };
+      return { run, resume: finalResume, factCheck, matchEvaluation };
     } catch (error) {
       const completedAt = new Date();
       const run: GenerationRun = {

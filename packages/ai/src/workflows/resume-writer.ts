@@ -34,44 +34,14 @@ export class ResumeWriter {
     const systemPrompt = getPrompt('resume-writer-system');
     if (!systemPrompt) throw new Error('resume-writer-system prompt not registered');
 
-    // Honor the strategist's selection when it picked valid facts; otherwise
-    // fall back to every non-rejected fact so thin evidence still produces output.
-    const eligible = facts.filter(f => f.status !== 'REJECTED');
-    const chosen = strategy.selectedFacts.length > 0
-      ? eligible.filter(f => strategy.selectedFacts.includes(f.id))
-      : [];
-    const sourceFacts = chosen.length > 0 ? chosen : eligible;
-
-    const factText = sourceFacts.map(f =>
-      `[${f.id}] (${f.category}) ${f.claim} — Source: ${f.sourceRef}`
-    ).join('\n');
-
-    const jobRequirements = `Job Requirements:
-- Must-have skills: ${jobAnalysis.mustHaveSkills.map(skill => skill.skill).join(', ')}
-- Preferred skills: ${jobAnalysis.preferredSkills.map(skill => skill.skill).join(', ')}
-- Responsibilities: ${jobAnalysis.responsibilities.join('; ')}
-- Keywords: ${jobAnalysis.keywords.join(', ')}
-
-Full Job Description:
-${job.rawText}`;
+    const sourceFacts = this.selectEvidence(facts, strategy);
+    const factText = this.renderFacts(sourceFacts);
 
     const messages: LLMMessage[] = [
       { role: 'system', content: systemPrompt.content },
       {
         role: 'user',
-        content: `Target Role: ${strategy.targetRole}
-Language: ${language ?? 'English'}
-
-${jobRequirements}
-
-Strategy:
-- Emphasize: ${strategy.emphasize.join(', ')}
-- De-emphasize: ${strategy.deemphasize.join(', ') || 'none'}
-- Experience priority: ${strategy.experiencePriority.join(' > ') || 'most relevant first'}
-- Section budget (approximate words): ${JSON.stringify(strategy.sectionBudget)}
-
-Candidate Facts (use ONLY these; preserve all relevant source history):
-${factText}
+        content: `${this.buildContext(profile, strategy, job, jobAnalysis, factText, language)}
 
 Generate a targeted ATS resume for this job:
 - Preserve EVERY distinct employer, role, and date range present in the facts — never merge two jobs into one entry.
@@ -92,6 +62,10 @@ Generate a targeted ATS resume for this job:
 
     this.logger.info('Resume generation complete', { tokenUsage });
 
+    return this.toResumeContent(profile, strategy, content);
+  }
+
+  private toResumeContent(profile: CandidateProfile, strategy: ResumeStrategy, content: WriterContent): ResumeContent {
     const matchingExperience = (company: string, role: string) => profile.workExperience.find(experience =>
       experience.company.toLowerCase() === company.toLowerCase() ||
       experience.title.toLowerCase() === role.toLowerCase()
@@ -176,5 +150,106 @@ Generate a targeted ATS resume for this job:
         factUsageMap: {},
       },
     };
+  }
+
+  /**
+   * Targeted revision pass: fixes ONLY the claims the fact checker flagged
+   * (critical severity) while preserving everything else in the draft.
+   */
+  async revise(
+    profile: CandidateProfile,
+    strategy: ResumeStrategy,
+    job: Job,
+    jobAnalysis: JobAnalysis,
+    facts: CandidateFact[],
+    previous: ResumeContent,
+    issues: { claim: string; reason: string; severity: string }[],
+    language?: string
+  ): Promise<ResumeContent> {
+    const systemPrompt = getPrompt('resume-writer-system');
+    if (!systemPrompt) throw new Error('resume-writer-system prompt not registered');
+
+    const sourceFacts = this.selectEvidence(facts, strategy);
+    const factText = this.renderFacts(sourceFacts);
+    const issueText = issues.map(i =>
+      `- CLAIM: "${i.claim}"\n  PROBLEM (${i.severity}): ${i.reason}`
+    ).join('\n');
+
+    const messages: LLMMessage[] = [
+      { role: 'system', content: systemPrompt.content },
+      {
+        role: 'user',
+        content: `${this.buildContext(profile, strategy, job, jobAnalysis, factText, language)}
+
+A verification pass flagged these claims in the draft below as unsupported or contradictory:
+${issueText}
+
+Previous draft JSON:
+${JSON.stringify(previous)}
+
+Rewrite the draft fixing ONLY the flagged problems:
+- Remove or rewrite each flagged bullet/claim so it is fully backed by the candidate facts.
+- Keep every unflagged section, employer, bullet, and detail EXACTLY as-is.
+- Do not add new content.
+- Return the complete corrected JSON in the same shape.`,
+      },
+    ];
+
+    this.logger.info('Revising resume content', { issues: issues.length });
+
+    const { data, tokenUsage } = await completeJson(this.client, messages, {
+      ...this.config,
+      jsonSchema: RESUME_CONTENT_SCHEMA,
+    });
+    const content = data as unknown as WriterContent;
+
+    this.logger.info('Resume revision complete', { tokenUsage });
+    return this.toResumeContent(profile, strategy, content);
+  }
+
+  private selectEvidence(facts: CandidateFact[], strategy: ResumeStrategy): CandidateFact[] {
+    // Honor the strategist's selection when it picked valid facts; otherwise
+    // fall back to every non-rejected fact so thin evidence still produces output.
+    const eligible = facts.filter(f => f.status !== 'REJECTED');
+    const chosen = strategy.selectedFacts.length > 0
+      ? eligible.filter(f => strategy.selectedFacts.includes(f.id))
+      : [];
+    return chosen.length > 0 ? chosen : eligible;
+  }
+
+  private renderFacts(sourceFacts: CandidateFact[]): string {
+    return sourceFacts.map(f =>
+      `[${f.id}] (${f.category}) ${f.claim} — Source: ${f.sourceRef}`
+    ).join('\n');
+  }
+
+  private buildContext(
+    _profile: CandidateProfile,
+    strategy: ResumeStrategy,
+    job: Job,
+    jobAnalysis: JobAnalysis,
+    factText: string,
+    language?: string
+  ): string {
+    return `Target Role: ${strategy.targetRole}
+Language: ${language ?? 'English'}
+
+Job Requirements:
+- Must-have skills: ${jobAnalysis.mustHaveSkills.map(skill => skill.skill).join(', ')}
+- Preferred skills: ${jobAnalysis.preferredSkills.map(skill => skill.skill).join(', ')}
+- Responsibilities: ${jobAnalysis.responsibilities.join('; ')}
+- Keywords: ${jobAnalysis.keywords.join(', ')}
+
+Full Job Description:
+${job.rawText}
+
+Strategy:
+- Emphasize: ${strategy.emphasize.join(', ')}
+- De-emphasize: ${strategy.deemphasize.join(', ') || 'none'}
+- Experience priority: ${strategy.experiencePriority.join(' > ') || 'most relevant first'}
+- Section budget (approximate words): ${JSON.stringify(strategy.sectionBudget)}
+
+Candidate Facts (use ONLY these; preserve all relevant source history):
+${factText}`;
   }
 }
