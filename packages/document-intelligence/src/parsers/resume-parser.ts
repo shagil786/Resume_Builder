@@ -66,28 +66,35 @@ export function extractFacts(
   for (const section of sections) {
     const normalizedTitle = section.title.toLowerCase().trim();
     const category = detectCategory(normalizedTitle);
+    const heading = section.title.trim();
 
-    const lines = section.content.split('\n').filter(l => l.trim().length > 10);
+    // Atomic facts: split the section into individual bullets/lines.
+    // Document Intelligence often returns a whole experience block as one
+    // paragraph with '·'/'•' separators — each accomplishment must become
+    // its own fact so it can be selected, cited, and verified independently.
+    const segments = section.content
+      .split('\n')
+      .flatMap(line => line.split(/\s*[·•]\s+|\s+[-–—]{1,2}\s+(?=[A-Z])/))
+      .map(s => s.replace(/^\s*[-–—·•]\s*/, '').trim())
+      .filter(s => s.length > 10 && s !== heading);
 
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-
-      const pageNumber = section.pageNumber;
+    for (let i = 0; i < segments.length; i++) {
+      const claim = normalizeClaim(segments[i]);
+      if (!claim) continue;
 
       facts.push({
         id: '',
         sourceRef,
         sourceLocation: {
-          pageNumber,
+          pageNumber: section.pageNumber,
           characterRange: {
-            start: doc.content.indexOf(line),
-            end: doc.content.indexOf(line) + line.length,
+            start: doc.content.indexOf(segments[i]),
+            end: doc.content.indexOf(segments[i]) + segments[i].length,
           },
         },
-        claim: line,
-        context: getContext(lines, i),
-        confidence: calculateConfidence(line, category),
+        claim,
+        context: buildContext(segments, i),
+        confidence: calculateConfidence(claim, category),
         status: 'EXTRACTED',
         category,
         timestamp: new Date(),
@@ -99,6 +106,31 @@ export function extractFacts(
   return { facts, personalInfo, summary };
 }
 
+/** Trims trailing separators and collapses whitespace for clean claims. */
+function normalizeClaim(text: string): string {
+  const cleaned = text
+    .replace(/\s+/g, ' ')
+    .replace(/\s*[·•]\s*$/, '')
+    .replace(/^[-–—·•]\s*/, '')
+    .trim();
+  // Drop fragments that are clearly date/location metadata only
+  if (/^(aug|jan|feb|mar|apr|may|jun|jul|sep|oct|nov|dec|20\d{2})/i.test(cleaned) && cleaned.length < 40) return '';
+  return cleaned;
+}
+
+/**
+ * Context = neighboring segments ONLY (never duplicates the claim itself).
+ */
+function buildContext(segments: string[], index: number): string {
+  const parts = [
+    index > 0 ? segments[index - 1] : '',
+    index < segments.length - 1 ? segments[index + 1] : '',
+  ]
+    .map(s => s.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+  return parts.join(' · ').slice(0, 400);
+}
+
 function detectCategory(sectionTitle: string): CandidateFact['category'] {
   if (/experience|work|employment|career|professional/i.test(sectionTitle)) return 'WORK';
   if (/skill|technical|competenc|expertise|proficien/i.test(sectionTitle)) return 'SKILL';
@@ -107,12 +139,6 @@ function detectCategory(sectionTitle: string): CandidateFact['category'] {
   if (/certif|certification|credential/i.test(sectionTitle)) return 'CERTIFICATION';
   if (/achiev|award|honor|accomplish/i.test(sectionTitle)) return 'ACHIEVEMENT';
   return 'WORK';
-}
-
-function getContext(lines: string[], index: number): string {
-  const before = index > 0 ? lines[index - 1] : '';
-  const after = index < lines.length - 1 ? lines[index + 1] : '';
-  return [before, lines[index], after].filter(Boolean).join('\n');
 }
 
 function calculateConfidence(line: string, _category: CandidateFact['category']): number {
