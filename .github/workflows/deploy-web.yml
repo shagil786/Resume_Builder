@@ -1,0 +1,42 @@
+name: Deploy Web
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/deploy-web.yml'
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy to Azure Static Web Apps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit -p apps/web
+
+      # Static export: browser talks directly to the Azure Function API,
+      # so the public URL must be baked in at build time.
+      - name: Build static export
+        run: npm run build -w @resume-builder/web && node apps/web/scripts/swa-config.mjs
+        env:
+          BUILD_STATIC: 'true'
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+          CI: true
+
+      - name: Deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: 'apps/web/out'
+          skip_app_build: true
