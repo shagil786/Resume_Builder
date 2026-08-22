@@ -20,7 +20,7 @@ export function SiteHero() {
         <HeroSceneLazy />
       </div>
 
-      <div className="relative z-10 w-full">
+      <div className="relative z-10 mx-auto w-full max-w-[1120px] px-5 lg:px-0">
         <p className="eyebrow">A calmer way to apply</p>
         <h1
           ref={headlineRef}

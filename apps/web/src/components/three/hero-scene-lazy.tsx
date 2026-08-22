@@ -30,8 +30,9 @@ export function HeroSceneLazy() {
   return (
     <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[58%] lg:block" aria-hidden>
       <HeroScene />
-      {/* fade edges so sheets melt into the page instead of clipping */}
+      {/* fade all four edges so sheets melt into the page instead of clipping */}
       <div className="absolute inset-y-0 left-0 w-40 bg-gradient-to-r from-canvas to-transparent" />
+      <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-canvas to-transparent" />
       <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-canvas to-transparent" />
     </div>
   );
