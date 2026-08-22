@@ -29,14 +29,25 @@ export function SiteFooter() {
           <ThemeToggle />
         </div>
 
-        {/* Oversized brand close */}
-        <div className="mt-16 select-none overflow-hidden" aria-hidden>
-          <p
-            className="whitespace-nowrap text-center font-bold leading-none tracking-[-.04em] text-transparent"
-            style={{ fontSize: 'clamp(52px, 11vw, 168px)', WebkitTextStroke: '1px var(--line-accent)' }}
-          >
-            RESUME BUILDER
-          </p>
+        {/* Oversized brand close — SVG scales to full width, never crops */}
+        <div className="mt-16 select-none" aria-hidden>
+          <svg viewBox="0 0 1000 130" className="w-full" role="presentation">
+            <text
+              x="500"
+              y="104"
+              textAnchor="middle"
+              textLength="984"
+              lengthAdjust="spacingAndGlyphs"
+              fontSize="118"
+              fontWeight="700"
+              letterSpacing="-2"
+              fill="transparent"
+              stroke="var(--line-accent)"
+              strokeWidth="1"
+            >
+              RESUME BUILDER
+            </text>
+          </svg>
         </div>
 
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-line pt-6 text-xs text-subtle sm:flex-row">
